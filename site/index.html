@@ -15,18 +15,18 @@
 
   THE TWO HONESTY CONSTRAINTS THAT MOVED, AND EXACTLY HOW FAR
   -----------------------------------------------------------
-  v1-v3 carried a rule: no GitHub anywhere, because the repository is private
-  and every such link is dead. The owner has now asked for the mark, on the
-  grounds that a source-available build is coming. Measured before building:
+  For v1-v3 this page carried no GitHub mark at all: the repository was
+  private, so every such link was dead. That is no longer true. The source
+  lives at github.com/framekeep/framekeep-src, which is public, and the links
+  here point at it. The working repository stays private, because it holds
+  planning notes, experiments and a competitor audit that are nobody's
+  business but the project's.
 
-      github.com/framekeep            -> 200   (the organisation page)
-      github.com/framekeep/framekeep  -> 404   (the repository, still private)
-
-  So the button points at the ORGANISATION, which resolves today, and never at
-  the repository, which does not. The label is "GitHub" and nothing more -- no
-  star count we do not have, and still no "Open Source" or "MIT" anywhere,
-  because BUSL-1.1 is source-available and the source is not public yet. The
-  day the repo opens, change one href.
+  What has NOT changed is the wording. Framekeep is source-available, not open
+  source: BUSL-1.1 forbids selling it or offering it as a competing service,
+  and a restriction on the field of use is exactly what an OSI-approved licence
+  may not have. So the words "Open Source" and "MIT" still appear nowhere on
+  this site, and the licence card says which of the two this is.
 
   The Microsoft Store badge is an ANNOUNCEMENT, not a button: it is a <span>,
   it carries the words "Coming soon", and it has no href. The rule it must not
@@ -104,10 +104,10 @@
           <a href="changelog.html">Changelog</a>
           <a href="privacy.html">Privacy</a>
           <a href="security.html">Security</a>
-          <a href="https://github.com/framekeep" rel="noopener noreferrer">GitHub</a>
+          <a href="https://github.com/framekeep/framekeep-src" rel="noopener noreferrer">GitHub</a>
         </div>
       </details>
-      <a class="btn btn-ghost nav-gh" href="https://github.com/framekeep" rel="noopener noreferrer">
+      <a class="btn btn-ghost nav-gh" href="https://github.com/framekeep/framekeep-src" rel="noopener noreferrer">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
         <span>GitHub</span>
       </a>
@@ -414,7 +414,7 @@
         <div class="card" data-reveal>
           <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M9 2.5v13M4 6h10M5.5 6 3.5 10.5h4L5.5 6ZM12.5 6l-2 4.5h4L12.5 6Z"/></svg></div>
           <h4>Source available</h4>
-          <p>Licensed BUSL-1.1: use it for anything, including commercially and inside a company. Each version converts to Apache&nbsp;2.0 four years after it is released. Not open source — the one thing the licence withholds is selling Framekeep itself.</p>
+          <p>The source is on <a href="https://github.com/framekeep/framekeep-src" rel="noopener noreferrer">GitHub</a>, licensed BUSL-1.1: use it for anything, including commercially and inside a company. Each version converts to Apache&nbsp;2.0 four years after it is released. Not open source — the one thing the licence withholds is selling Framekeep itself.</p>
         </div>
       </div>
     </div>
@@ -461,7 +461,7 @@
         <a href="changelog.html">Changelog</a>
         <a href="privacy.html">Privacy</a>
         <a href="security.html">Security</a>
-        <a href="https://github.com/framekeep" rel="noopener noreferrer"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>GitHub</a>
+        <a href="https://github.com/framekeep/framekeep-src" rel="noopener noreferrer"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>GitHub</a>
       </div>
     </div>
     <div class="foot-row">
