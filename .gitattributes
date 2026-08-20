@@ -1,0 +1,27 @@
+# Line endings: LF in the repository, so a checkout on Windows and one on
+# macOS do not produce a diff against each other.
+* text=auto eol=lf
+
+# Windows scripts only run with CRLF.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Binary -- never touch.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.mp4  binary
+*.mov  binary
+*.mkv  binary
+*.webm binary
+*.msix binary
+*.appx binary
+*.pfx  binary
+*.cer  binary
+*.gguf binary
+*.bin  binary
+*.onnx binary
