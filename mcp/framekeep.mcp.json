@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "framekeep": {
+      "command": "node",
+      "args": ["C:/Users/ADMIN/OneDrive/Desktop/VisionAI/mcp/dist/index.js"],
+      "env": { "FRAMEKEEP_CORE": "C:/Users/ADMIN/OneDrive/Desktop/VisionAI/core/target/release/framekeep-core.exe" }
+    }
+  }
+}

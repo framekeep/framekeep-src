@@ -1,0 +1,94 @@
+[package]
+name = "framekeep-tray"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "GUI, queue and IPC server for Framekeep. Knows nothing about video -- it calls framekeep-core for that."
+
+[lib]
+name = "framekeep_tray"
+path = "src/lib.rs"
+
+# The IPC server with no GUI on top. This is what CI runs; keeping it a
+# separate binary means the protocol stays testable without a window server.
+[[bin]]
+name = "framekeep-trayd"
+path = "src/main.rs"
+
+# The app: tray icon + window + the same IPC server. Behind a feature so that
+# `cargo test` needs no webview toolchain -- the Linux CI job has none.
+[[bin]]
+name = "framekeep-tray"
+path = "src/gui.rs"
+required-features = ["gui"]
+
+[features]
+gui = ["dep:tauri", "dep:tauri-plugin-single-instance", "dep:tauri-plugin-global-shortcut", "dep:tauri-plugin-dialog"]
+
+[build-dependencies]
+# Runs only when the `gui` feature is on -- see build.rs.
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# protocol-asset: the queue screen's thumbnails are frame files in the cache,
+# served over the asset protocol -- paths travel, pixels stay on disk.
+tauri = { version = "2", features = ["tray-icon", "protocol-asset"], optional = true }
+tauri-plugin-single-instance = { version = "2", optional = true }
+# S4.1. Its handler fires on press AND release -- see register_paste_shortcut.
+tauri-plugin-global-shortcut = { version = "2", optional = true }
+# The folder picker Settings needs. Official plugin rather than hand FFI: a
+# folder the user PICKED is readable by a packaged (MSIX) app without the
+# restricted `broadFileSystemAccess` capability -- see settings::Watch.
+tauri-plugin-dialog = { version = "2", optional = true }
+
+# The queue. SQLite rather than a JSON file because several processes read it
+# at once and the tray writes while the MCP adapter reads -- that needs
+# transactions, not a lock file.
+#
+# `bundled` compiles SQLite from source into the binary. Windows has no system
+# sqlite3 to link against, and shipping one version we chose beats depending on
+# whichever one a machine happens to carry.
+rusqlite = { version = "0.37", features = ["bundled"] }
+
+# `windows`, alongside `windows-sys`, for exactly one thing: asking the
+# system whether this packaged app starts with Windows. StartupTask is
+# WinRT and has no windows-sys equivalent, so the newtypes are the price of
+# a switch that tells the truth instead of writing a Run key nobody can
+# find. Same version core already pulls, so the tree does not grow twice.
+[target.'cfg(windows)'.dependencies.windows]
+version = "0.62"
+features = ["ApplicationModel", "Foundation"]
+
+# The async half. The `windows` crate 0.62 moved IAsyncOperation into its own crate, and
+# its readme documents a join() that is imported privately -- see the comment
+# on block_on in startup.rs. Same version core pins.
+[target.'cfg(windows)'.dependencies.windows-future]
+version = "0.3"
+
+# windows-sys, not windows: raw FFI with no newtypes. Same reasoning as the
+# S0.1 spike, which lost most of its time to newtype churn in `windows` 0.62.
+[target.'cfg(windows)'.dependencies.windows-sys]
+version = "0.60"
+features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Pipes",
+    "Win32_System_Threading",
+    # Clipboard: reading CF_HDROP on paste, and only on paste (principle IV).
+    "Win32_System_DataExchange",
+    # Writing the ready-to-paste prompt (S5.10). Same file owns it as reading.
+    "Win32_System_Memory",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+    # ReadFile/WriteFile/ConnectNamedPipe take an OVERLAPPED, so they sit behind
+    # this feature even though they live in the FileSystem/Pipes modules.
+    "Win32_System_IO",
+]
+
+[profile.release]
+opt-level = 2
+strip = true

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The window listens for one event and does nothing else. Tauri 2 grants a webview no permissions at all by default, and that default is the right one here: this window renders three sentences and a paste receipt. Every permission added below has to earn its place -- especially anything touching the filesystem or the clipboard, which the webview must never reach.",
+  "windows": ["main"],
+  "permissions": ["core:event:default"]
+}

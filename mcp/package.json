@@ -1,0 +1,30 @@
+{
+  "name": "framekeep-mcp",
+  "version": "0.2.0",
+  "license": "BUSL-1.1",
+  "description": "MCP adapter for Framekeep. A shell: core knows about video, this knows about the protocol.",
+  "type": "module",
+  "bin": {
+    "framekeep-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "eslint src tests"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

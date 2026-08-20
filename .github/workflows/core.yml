@@ -1,0 +1,210 @@
+name: core
+
+# Windows is not an afterthought here, it is the platform this product bets on.
+# The S0.4 audit found two competitors whose Windows bugs survived to users
+# precisely because their CI only ran Linux and macOS. This runs Windows first
+# and treats it as the blocking job.
+
+on:
+  push:
+    paths: ['core/**', '.github/workflows/core.yml']
+  pull_request:
+    paths: ['core/**', '.github/workflows/core.yml']
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # A build failure should not be buried under a wall of incremental noise.
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  windows:
+    name: windows-latest (with ffmpeg)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      # The same LGPL build the product vendors, so CI exercises the real
+      # configuration rather than whatever ffmpeg a runner happens to carry.
+      # Pinned: an ffmpeg that silently changes behaviour is exactly the failure
+      # mode that broke a competitor (`-vsync` removed, code still using it).
+      - name: Cache ffmpeg
+        id: ffmpeg-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor/ffmpeg/win64
+          key: ffmpeg-n8.1-win64-lgpl-shared-v1
+
+      - name: Fetch ffmpeg (LGPL)
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.1-latest-win64-lgpl-shared-8.1.zip'
+          Invoke-WebRequest -Uri $url -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath _ff -Force
+          $bin = (Get-ChildItem _ff -Directory | Select-Object -First 1).FullName + '\bin'
+          New-Item -ItemType Directory -Force -Path vendor\ffmpeg\win64 | Out-Null
+          # avdevice is required even though we never touch a capture device:
+          # ffmpeg.exe imports it, and without it startup dies with 0xC0000135,
+          # an error that never mentions a DLL.
+          Copy-Item "$bin\*" vendor\ffmpeg\win64\ -Force
+
+      # Transcription is half the product and CI was not running a line of it,
+      # because it needs two things the repo does not carry: the whisper build
+      # and a model. Both are small enough at this size to just fetch.
+      - name: Cache whisper.cpp
+        id: whisper-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor/whisper/win64
+          key: whisper-v1.9.2-win64-v1
+
+      - name: Fetch whisper.cpp (v1.9.2)
+        if: steps.whisper-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.2/whisper-bin-x64.zip'
+          Invoke-WebRequest -Uri $url -OutFile whisper.zip
+          # Pinned by hash, same reasoning as ffmpeg: a tool that changes
+          # behaviour underneath us is the failure we are guarding against.
+          $want = '49dcc16de826f20bd53d44f947a1ae49dfa81f86cad67a64d80820cb192d674a'
+          $got = (Get-FileHash whisper.zip -Algorithm SHA256).Hash.ToLower()
+          if ($got -ne $want) { Write-Error "whisper.cpp checksum mismatch: $got"; exit 1 }
+          Expand-Archive whisper.zip -DestinationPath _wh -Force
+          New-Item -ItemType Directory -Force -Path vendor\whisper\win64 | Out-Null
+          $cli = Get-ChildItem _wh -Recurse -Filter whisper-cli.exe | Select-Object -First 1
+          Copy-Item "$($cli.DirectoryName)\*" vendor\whisper\win64\ -Force
+
+      # tiny.en, not the 547 MiB default: a test nobody waits for is a test
+      # nobody keeps.
+      - name: Cache whisper model
+        id: model-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.framekeep/models
+          key: whisper-model-tiny-en-v1
+
+      - name: Fetch tiny.en model (74 MiB)
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:USERPROFILE '.framekeep\models'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          $dest = Join-Path $dir 'ggml-tiny.en.bin'
+          Invoke-WebRequest -OutFile $dest `
+            -Uri 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin'
+          $want = '921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f'
+          $got = (Get-FileHash $dest -Algorithm SHA256).Hash.ToLower()
+          if ($got -ne $want) {
+            Remove-Item $dest
+            Write-Error "model checksum mismatch: $got"
+            exit 1
+          }
+
+      # S5.1 reads frames with Windows.Media.Ocr, and whether a runner carries an
+      # OCR language pack at all is unmeasured -- Microsoft's runner-images
+      # readme lists none, and on Server editions the engine data is a Feature
+      # on Demand that is not installed by default. So: ask, print the answer,
+      # and let the guard below act on it. The alternative is a scan test that
+      # goes green because nothing ran, which is the exact trap this workflow
+      # already had to fence off for ffmpeg and whisper.
+      #
+      # Windows PowerShell, not pwsh: the `ContentType = WindowsRuntime` type
+      # syntax is a 5.1 feature and PowerShell 7 dropped it.
+      - name: Probe for an OCR engine
+        id: ocr
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [Windows.Media.Ocr.OcrEngine, Windows.Media, ContentType = WindowsRuntime] | Out-Null
+          $engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages()
+          $langs = [Windows.Media.Ocr.OcrEngine]::AvailableRecognizerLanguages
+          Write-Host "recognizer languages on this runner: $($langs.Count)"
+          foreach ($l in $langs) { Write-Host "  $($l.LanguageTag)" }
+          if ($null -eq $engine) {
+            Write-Host "RESULT: no OCR engine for this runner's user-profile languages."
+            Write-Host "Scan tests will skip. Fix is DISM /Add-Capability Language.OCR~~~en-US~0.0.1.0."
+            "available=false" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            Write-Host "RESULT: OCR engine present ($($engine.RecognizerLanguage.LanguageTag))."
+            "available=true" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
+
+      - name: Formatting
+        working-directory: core
+        run: cargo fmt --check
+
+      - name: Clippy
+        working-directory: core
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Build
+        working-directory: core
+        run: cargo build --release
+
+      # Integration tests generate their own fixtures with ffmpeg and run the
+      # real binary. They skip rather than fail when ffmpeg is missing, so this
+      # step asserts afterwards that they actually ran.
+      - name: Test
+        working-directory: core
+        run: cargo test --release -- --nocapture
+
+      - name: Fail if integration tests silently skipped
+        working-directory: core
+        shell: pwsh
+        run: |
+          $out = cargo test --release --test cli -- --nocapture 2>&1 | Out-String
+          if ($out -match 'skipping: no ffmpeg') {
+            Write-Error "Integration tests skipped -- ffmpeg was not found, so nothing was really verified."
+            exit 1
+          }
+          # Same trap one layer down: the transcription tests skip when whisper
+          # or the model is missing, and a green tick that checked nothing is
+          # worse than no tick at all.
+          if ($out -match 'skipping: no whisper-cli') {
+            Write-Error "Transcription tests skipped -- whisper or the model was missing."
+            exit 1
+          }
+          # Same trap, third instance. A skip is only acceptable when the probe
+          # above found no engine; if there IS one and the test skipped anyway,
+          # something broke in a way that reads as success.
+          if ('${{ steps.ocr.outputs.available }}' -eq 'true' -and $out -match 'skipping: no OCR engine') {
+            Write-Error "OCR scan test skipped on a runner that reported an engine."
+            exit 1
+          }
+          if ('${{ steps.ocr.outputs.available }}' -ne 'true') {
+            Write-Host "NOTE: redaction scanning was NOT exercised -- this runner has no OCR engine."
+          }
+          Write-Host "Integration tests ran against a real ffmpeg and a real model."
+
+  linux:
+    name: ubuntu-latest (portability)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      # Not the shipping platform. This job exists to catch Windows-only
+      # assumptions early, because macOS is slice S7 and the same assumptions
+      # would bite there.
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Build
+        working-directory: core
+        run: cargo build --release
+
+      - name: Test
+        working-directory: core
+        run: cargo test --release

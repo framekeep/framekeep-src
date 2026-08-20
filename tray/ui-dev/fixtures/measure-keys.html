@@ -1,0 +1,6 @@
+<!doctype html>
+<!-- Wrapper so the measure query never rides a command line: Edge's URL
+     fixup mangled file/http URLs carrying "=" through both PowerShell and
+     cmd (diagnosed 18/08 -- the DNS error page for host "=keys"). The
+     redirect happens inside the browser, where URLs are just URLs. -->
+<script>location.replace("acme-frame.html?measure=keys");</script>

@@ -1,0 +1,47 @@
+[package]
+name = "framekeep-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Video processing for Framekeep. No UI, no IPC server -- this is the only place that knows how to handle video."
+
+[[bin]]
+name = "framekeep-core"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Only to read back frames we just wrote, for dedup. Pure Rust, no C toolchain.
+png = "0.17"
+# Model downloads. Blocking on purpose: core is a CLI, and an async runtime
+# would be a large dependency to carry for one HTTP GET.
+ureq = { version = "3", default-features = false, features = ["rustls"] }
+# Verifying a 547 MiB download. A truncated model does not fail loudly -- it
+# produces quietly wrong transcripts.
+sha2 = "0.10"
+
+# Windows.Media.Ocr, for S5.1. The engine was chosen by measurement, not by
+# taste: 0 MB to ship, ~42 ms a frame, per-word boxes
+# (`docs/experiments/ocr-windows-media.md`).
+#
+# Target-gated deliberately. `core` also builds on ubuntu in CI -- that job
+# exists to catch Windows-only assumptions now rather than when macOS lands in
+# S7 -- and an unconditional dependency here turns it red. The non-Windows path
+# in `ocr.rs` returns a plain error saying so.
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+    "Media_Ocr",
+    "Graphics_Imaging",
+    "Storage_Streams",
+    "Globalization",
+    "Win32_System_Com",
+] }
+# The async types the WinRT calls return. A separate crate since 0.62, and it
+# is where the blocking `join()` lives -- this is a CLI, there is no runtime to
+# await on.
+windows-future = "0.3"
+
+[profile.release]
+opt-level = 2
+strip = true

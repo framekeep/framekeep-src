@@ -1,0 +1,82 @@
+name: tray
+
+# Same reasoning as `core.yml`: Windows is the platform this product bets on,
+# so it is the blocking job. It matters more here than anywhere else -- the
+# named pipe, its DACL and the single-instance rule only exist on Windows, and
+# a test that never runs there tests nothing that ships.
+
+on:
+  push:
+    paths: ['tray/**', '.github/workflows/tray.yml']
+  pull_request:
+    paths: ['tray/**', '.github/workflows/tray.yml']
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  windows:
+    name: windows-latest (named pipe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tray/src-tauri
+
+      - name: Formatting
+        working-directory: tray/src-tauri
+        run: cargo fmt --check
+
+      # With the gui feature, so the Tauri shell is linted too. Windows only:
+      # the Linux job has no webview toolchain, which is exactly why the
+      # feature exists.
+      - name: Clippy
+        working-directory: tray/src-tauri
+        run: cargo clippy --features gui --all-targets -- -D warnings
+
+      - name: Test
+        working-directory: tray/src-tauri
+        run: cargo test -- --nocapture
+
+      # The transport tests create real pipes. If the runner ever stops
+      # allowing that they would not fail -- there would simply be fewer of
+      # them, and the tick would stay green while the boundary went unchecked.
+      - name: Fail if the pipe tests did not run
+        working-directory: tray/src-tauri
+        shell: pwsh
+        run: |
+          $out = cargo test -- --nocapture 2>&1 | Out-String
+          foreach ($name in @(
+            'a_client_can_handshake_and_is_still_refused_the_two_write_methods',
+            'two_clients_are_served_at_once_not_one_after_the_other',
+            'a_second_instance_cannot_take_the_same_name'
+          )) {
+            if ($out -notmatch "$name \.\.\. ok") {
+              Write-Error "$name did not run. The permission boundary was not verified on a real pipe."
+              exit 1
+            }
+          }
+          Write-Host "The boundary was checked over real named pipes."
+
+  linux:
+    name: ubuntu-latest (unix socket)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tray/src-tauri
+
+      # Not the shipping platform, and not macOS either. It exists because the
+      # Unix socket transport is otherwise written and never executed: this at
+      # least runs its tests somewhere before S7 gets to a Mac.
+      - name: Test
+        working-directory: tray/src-tauri
+        run: cargo test -- --nocapture

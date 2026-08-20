@@ -1,0 +1,89 @@
+# Rust
+target/
+**/target/
+*.pdb
+*.exe
+*.dll
+# Layout MSIX: manifest + asset thi GIU (dang ky lai duoc ngay), exe la san pham
+# build nen khong theo doi — xem spike/s0-named-pipe/README.md
+#
+# Cargo.lock CO commit: day la crate binary, build phai tai lap duoc.
+# Quy uoc nay ap dung ca cho core/ sau nay.
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+.npm/
+
+# Tauri
+tray/src-tauri/target/
+tray/src-tauri/gen/
+
+# Bundled binaries + models — never in git (dung luong lon, tai luc build/chay).
+# Rieng README cua vendor thi GIU: no ghi xuat xu, SHA-256 va ly do chon ban LGPL.
+vendor/ffmpeg/*
+!vendor/ffmpeg/README.md
+vendor/whisper/*
+!vendor/whisper/README.md
+models/
+*.bin
+*.gguf
+*.onnx
+*.msix
+*.msixbundle
+*.appx
+*.pfx
+*.cer
+
+# Du lieu nguoi dung / runtime
+.framekeep/
+cache/
+queue.db
+queue.db-*
+
+# Anh + video test cua ca nhan — khong day len repo
+_testdata/
+*.mp4
+*.mov
+*.mkv
+*.webm
+
+# Python (script thuc nghiem trong docs/experiments/)
+__pycache__/
+*.pyc
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Scratch
+scratch/
+tmp/
+*.log
+
+# S2.11 rig output -- one run of data, not code
+spike/s2-client-spawn/spawn-log.jsonl
+
+# Client config written by `framekeep-mcp init` -- absolute paths, machine-specific.
+# Unanchored on purpose: init used to land these in a subfolder, and a rule that
+# only covered the root let them slip into a commit.
+.mcp.json
+**/.cursor/mcp.json
+**/.vscode/mcp.json
+
+# Build logs from spike/s5-windows-crate-cost/measure.ps1 -- regenerable noise.
+# The result-*.json next to them ARE the measurement and stay tracked.
+spike/s5-windows-crate-cost/*.log
+
+# Product shots are build artifacts: one command regenerates them
+# (tray/ui-dev/shoot.ps1). The committed things are the harness and fixtures.
+tray/ui-dev/shots/
+
+# S6.1 MSIX build output -- 161 MB of copied binaries, rebuilt by tray/msix/build.ps1
+tray/msix/layout/
+tray/msix/*.msix

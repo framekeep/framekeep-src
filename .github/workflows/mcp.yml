@@ -1,0 +1,89 @@
+name: mcp
+
+# The crate that leaves the building.
+#
+# `core` and `tray` have had CI since S1; `mcp` had none until 18/08, and it is
+# the only one of the three already published -- `npx framekeep-mcp` reaches
+# strangers, the other two do not. Every change to it since S2 was verified on
+# one laptop, which is exactly the arrangement the S0.4 audit found behind two
+# competitors' Windows bugs.
+#
+# Windows first for the same reason `core.yml` says: it is the platform this
+# product bets on. Node is cross-platform in the way that matters here, but the
+# adapter spends its life on Windows path separators and a named pipe, and both
+# have already produced bugs that only exist on one OS.
+
+on:
+  push:
+    paths: ['mcp/**', '.github/workflows/mcp.yml']
+  pull_request:
+    paths: ['mcp/**', '.github/workflows/mcp.yml']
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: mcp
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Both, and neither allowed to fail: the transport tests take a named pipe
+      # on Windows and a unix socket elsewhere, so a green run on one OS says
+      # nothing about the branch the other takes. Same reasoning as core.yml's
+      # linux job, except here both platforms are shipping platforms -- the
+      # adapter runs wherever the user's MCP client runs.
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches `engines` in package.json. Pinned to the major, because a
+          # runtime that changes underneath us is the failure the sibling
+          # workflows pin ffmpeg and whisper against.
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Two reporters, one run: the verbose one is for a human reading the log,
+      # the JSON one is for the guard below. Running the suite twice to get both
+      # would double the wall clock and, worse, let the guard pass on a run that
+      # is not the run anybody looked at.
+      - name: Test
+        run: npx vitest run --reporter=verbose --reporter=json --outputFile=result.json
+
+      # The trap this repo keeps meeting: a suite that runs nothing is
+      # indistinguishable from a suite that finds nothing. `core.yml` already
+      # fences three of these off by name. Here the whole suite could vanish --
+      # a bad glob, a renamed directory, a config that matches no files -- and
+      # vitest exits 0 with "no test files found".
+      - name: Fail if the suite shrank or vanished
+        shell: pwsh
+        run: |
+          if (-not (Test-Path result.json)) {
+            Write-Error "vitest produced no report -- nothing was verified."
+            exit 1
+          }
+          $r = Get-Content result.json -Raw | ConvertFrom-Json
+          $passed = $r.numPassedTests
+          Write-Host "tests passed: $passed"
+          # A floor, not the exact count: raising it on every added test turns
+          # CI into a chore and teaches people to edit the number instead of
+          # reading the failure. It catches the case that matters -- the suite
+          # quietly stopping at a fraction of itself.
+          $floor = 80
+          if ($passed -lt $floor) {
+            Write-Error "only $passed tests ran, expected at least $floor. Did the suite stop being discovered?"
+            exit 1
+          }

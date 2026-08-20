@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- Every relative URL in the adopted document resolves into ../ui/, so the
+       REAL stylesheet, scripts and brand image load -- nothing is copied. -->
+  <base href="../ui/" />
+  <title>Framekeep — UI dev harness</title>
+</head>
+<!--
+  Development harness for the app's screens, and the seed of S4.8's demo mode.
+  NOT shipped: tauri.conf.json's frontendDist points at ../ui only.
+
+  It loads the real ui/index.html into this page, stubs the two window.__TAURI__
+  surfaces the screens use, and feeds them fixtures/ -- which hold a REAL
+  core scan of a synthetic recording (planted, never-live secrets from
+  spike/s5-ocr-poc's corpus; the same provenance as core/tests/fixtures/ocr).
+
+  Serve from the repo root and open /tray/ui-dev/:
+      python tray/ui-dev/serve.py     (NOT http.server -- see serve.py)
+  Deep links: /tray/ui-dev/#review/<handle> works the same as in the app.
+-->
+<body>
+<script type="module">
+  const FIXTURES = new URL("../ui-dev/fixtures/", location.href).href;
+  const HANDLE = "61d8ecca2227ad78";
+
+  // Dev levers: ?theme=light|dark pins the palette (the hook Settings will
+  // use); ?name= exercises the long-filename truncation for real.
+  //
+  // ?shot=<screen>-<theme> (e.g. shot=review-light) is the screenshot mode:
+  // demo dataset from demo.js, frozen clock, forced theme, and the review
+  // deep link — all folded into ONE parameter, because a second one would
+  // put an ampersand on Edge's command line, and Edge's URL fixup was
+  // caught splitting exactly there (18/08).
+  const params = new URLSearchParams(location.search);
+  const shot = params.get("shot");
+  // Theme is the LAST segment: "first-setup-light" is a screen with a dash.
+  const shotParts = shot ? shot.split("-") : [];
+  const shotTheme = shotParts.length ? shotParts[shotParts.length - 1] : null;
+  const shotScreen = shotParts.slice(0, -1).join("-") || null;
+  const theme = shotTheme ?? params.get("theme");
+  if (theme) document.documentElement.dataset.theme = theme;
+  const NAME = params.get("name") ?? "fix-payment-flow.mp4";
+  // ?broken=speech|ffmpeg|shortcut|core -- the states S5.9's sections exist to
+  // report. They are unreachable on a healthy machine, which is exactly why
+  // they need a lever: an "Unavailable" pill nobody has ever seen rendered is
+  // a pill nobody knows is broken.
+  const BROKEN = params.get("broken");
+
+  // Anchored to location, not to a relative specifier: the <base href="../ui/">
+  // above rebases relative imports too, and "./demo.js" quietly became
+  // ../ui/demo.js (a 404) the first time this ran.
+  const demo = shot ? await import(new URL("demo.js", location.href).href) : null;
+  if (demo) window.__DEMO_NOW__ = demo.DEMO_NOW;
+
+  const scan = await (await fetch(`${FIXTURES}scan.json`)).json();
+  const frameFile = (f) => FIXTURES + f.file.split("\\").pop();
+
+  const row = {
+    handle: HANDLE,
+    name: NAME,
+    stage: "needs_review",
+    created_at: Math.floor(Date.now() / 1000) - 3600,
+    duration_ms: 16_000,
+    width: 1920,
+    height: 1080,
+    frames_found: scan.frames.length,
+    sensitive_items: scan.detections_total,
+    awaiting_review: true,
+    source_is_ours: false,
+    expires_at: Math.floor(Date.now() / 1000) + 6 * 86_400,
+    source_will_be_deleted: false,
+    error: null,
+    thumbnail: frameFile(scan.frames[0]),
+  };
+
+  // The person's ticks live here between save and reload, like review.json.
+  let ticks = scan.frames.map((f) => f.detections.map(() => true));
+  let harnessExtras = scan.frames.map(() => []);
+
+  // Settings state for the harness: defaults, mutated like the real store.
+  let fakeSettings = {
+    retention: { delete_copied_sources: true, choice_made: false, keep_days: 7 },
+    watch: null,
+    // The app's own theme must AGREE with the forced one: settings.js applies
+    // its saved theme at boot, and "system" would strip the data-theme the
+    // harness just set. Found as a dark "light" shot.
+    //
+    // `theme` was fixed here for `?shot=` and left broken for `?theme=`, which
+    // is the lever a person uses while working. It cost another dark "light"
+    // shot on 19/08 -- the same failure, in the half that had not been
+    // repaired, which is the usual shape of a half-repair.
+    theme: theme ?? "system",
+    // Two, so the demo shows a real list rather than an empty box. The second
+    // one carries an accent on purpose -- it proves the chips render what was
+    // typed rather than ASCII only, which is the thing worth demonstrating.
+    //
+    // It used to be `MÃ NHÂN VIÊN`, and these screenshots are the ones
+    // `screenshots.md` sends to the Store listing. Vietnamese in a product
+    // surface breaks the first rule in CLAUDE.md; the accent test survives
+    // without it.
+    redaction: { patterns: ["Project Nightingale", "Café Rossi ledger"] },
+    app: { minimize_to_tray: true, start_on_login: false },
+    transcription: { model: null, language: null, models_dir: null },
+  };
+
+  const calls = [];
+  window.__HARNESS__ = { calls };
+
+  window.__TAURI__ = {
+    core: {
+      convertFileSrc: (p) => p,
+      invoke: async (cmd, args) => {
+        calls.push([cmd, args]);
+        switch (cmd) {
+          case "queue_snapshot":
+            if (demo) {
+              const items = demo.demoQueue(FIXTURES);
+              return { items, showing: items.length };
+            }
+            return { items: [row], showing: 1 };
+          case "review_data":
+            if (demo) return demo.demoReview(FIXTURES);
+            return {
+              handle: HANDLE,
+              name: row.name,
+              stage: row.stage,
+              duration_ms: row.duration_ms,
+              width: row.width,
+              height: row.height,
+              frame_count: row.frames_found,
+              engine: scan.engine,
+              unreadable_frames: scan.unreadable_frames,
+              extras: harnessExtras,
+              frames: scan.frames.map((f, fi) => ({
+                file: frameFile(f),
+                pts_time: f.pts_time,
+                error: f.error ?? null,
+                detections: f.detections.map((d, di) => ({
+                  kind: d.kind,
+                  masked: d.masked,
+                  boxes: d.boxes,
+                  located: d.located,
+                  approved: ticks[fi][di],
+                })),
+              })),
+            };
+          case "save_review":
+            ticks = args.ticks;
+            harnessExtras = args.extras;
+            return null;
+          case "approve_recording": {
+            ticks = args.ticks;
+            harnessExtras = args.extras;
+            const approvedLocated = scan.frames.reduce(
+              (n, f, fi) =>
+                n + f.detections.filter((d, di) => ticks[fi][di] && d.located).length,
+              0
+            );
+            row.stage = "ready";
+            return {
+              frames_redacted: scan.frames.filter((f, fi) =>
+                f.detections.some((d, di) => ticks[fi][di] && d.located)
+              ).length,
+              masks_applied: approvedLocated,
+              left_visible: scan.frames.reduce(
+                (n, f, fi) =>
+                  n + f.detections.filter((d, di) => ticks[fi][di] && !d.located).length,
+                0
+              ),
+            };
+          }
+          // The command has no clipboard in a browser tab; what the harness
+          // must still prove is that the wiring reaches Rust with a handle and
+          // that the receipt says so.
+          case "copy_prompt":
+            return `Look at the screen recording at "C:\Users\demo\Videos\${args.handle}.mp4" and tell me what happens in it.`;
+          case "get_settings":
+            return structuredClone(fakeSettings);
+          case "set_theme":
+            fakeSettings.theme = args.theme;
+            return null;
+          case "set_retention":
+            fakeSettings.retention.delete_copied_sources = args.delete;
+            fakeSettings.retention.keep_days = args.keepDays;
+            fakeSettings.retention.choice_made = true;
+            return null;
+          // The real catalogue's shape, with the owner's actual figures, so
+          // the screenshot shows the sizes and speeds a person would compare.
+          case "list_models":
+            return {
+              models_dir: "C:\\Users\\demo\\.framekeep\\models",
+              ram_gb: 31,
+              recommended: "large-v3-turbo-q5_0",
+              models: [
+                { name: "large-v3-turbo-q5_0", size_mib: 547, installed: true, realtime_factor: 1.2, speed_measured: true },
+                { name: "small", size_mib: 465, installed: true, realtime_factor: 5.0, speed_measured: true },
+                { name: "base", size_mib: 141, installed: true, realtime_factor: 13.8, speed_measured: true },
+                { name: "tiny.en", size_mib: 74, installed: false, realtime_factor: 20.5, speed_measured: true },
+              ],
+            };
+          case "set_transcription":
+            fakeSettings.transcription.model = args.model === "auto" ? null : args.model;
+            fakeSettings.transcription.language = args.language === "auto" ? null : args.language;
+            return structuredClone(fakeSettings);
+          case "pick_models_dir":
+            fakeSettings.transcription.models_dir = args.reset
+              ? null
+              : "D:\\models";
+            return structuredClone(fakeSettings);
+          case "set_minimize_to_tray":
+            fakeSettings.app.minimize_to_tray = args.on;
+            return structuredClone(fakeSettings);
+          // The harness answers what the SYSTEM would, which here is "there is
+          // no startup task outside a package" -- the same refusal the real
+          // command gives when run unpackaged.
+          case "set_start_on_login":
+            if (args.on) throw "Starting with Windows needs the installed version of Framekeep.";
+            fakeSettings.app.start_on_login = false;
+            return structuredClone(fakeSettings);
+          case "add_pattern": {
+            const word = String(args.word).trim();
+            if (word.split("").filter((c) => !" _-.".includes(c)).length < 4) {
+              throw "Use at least 4 letters or digits. Shorter patterns match ordinary words and bury the real findings.";
+            }
+            if (fakeSettings.redaction.patterns.some((p) => p.toLowerCase() === word.toLowerCase())) {
+              throw `${word} is already on the list.`;
+            }
+            fakeSettings.redaction.patterns.push(word);
+            return structuredClone(fakeSettings);
+          }
+          case "remove_pattern":
+            fakeSettings.redaction.patterns = fakeSettings.redaction.patterns.filter(
+              (p) => p !== args.word
+            );
+            return structuredClone(fakeSettings);
+          case "watch_folder_on":
+            fakeSettings.watch = { folder: "C:\Users\demo\Videos\Recordings", since: 0 };
+            return structuredClone(fakeSettings);
+          case "watch_folder_off":
+            fakeSettings.watch = null;
+            return structuredClone(fakeSettings);
+          case "clear_all_data":
+            return "Removed 7 recordings and their frames.";
+          case "reset_settings":
+            fakeSettings = {
+              retention: { delete_copied_sources: true, choice_made: false, keep_days: 7 },
+              watch: null,
+              theme: "system",
+              redaction: { patterns: [] },
+              app: { minimize_to_tray: true, start_on_login: false },
+              transcription: { model: null, language: null, models_dir: null },
+            };
+            return structuredClone(fakeSettings);
+          case "app_version":
+            return "0.1.0";
+          case "connect_command":
+            return "npx framekeep-mcp init";
+          case "copy_connect_command":
+            return "npx framekeep-mcp init";
+          // Two answers the real app can only give from a real machine. The
+          // harness serves the healthy shape by default; `?broken=speech`,
+          // `?broken=ffmpeg`, `?broken=shortcut` and `?broken=core` serve the
+          // unhealthy ones, because those are the states that never get looked
+          // at and are exactly where the screens have to still say something.
+          case "shortcut_status":
+            if (BROKEN === "shortcut") {
+              return {
+                chord: "Ctrl + Shift + V",
+                registered: false,
+                detail:
+                  "Another program is using Ctrl + Shift + V. Paste in the window instead (HotKey already registered).",
+              };
+            }
+            return { chord: "Ctrl + Shift + V", registered: true, detail: null };
+          case "diagnostics": {
+            if (BROKEN === "core") throw new Error("Couldn't start framekeep-core (not found).");
+            const ffmpeg = {
+              path: "C:\\Program Files\\WindowsApps\\Framekeep\\ffmpeg\\ffmpeg.exe",
+              ffprobe: "C:\\Program Files\\WindowsApps\\Framekeep\\ffmpeg\\ffprobe.exe",
+              version: "n8.1.2-40-g852b0552f0-20260814",
+              version_short: "8.1.2",
+              from_path: BROKEN === "ffmpeg",
+            };
+            const speech = BROKEN === "speech";
+            return {
+              core_version: "0.1.0",
+              arch: "x64",
+              ffmpeg,
+              ffmpeg_error: null,
+              whisper: speech
+                ? {
+                    available: false,
+                    cli: null,
+                    model: null,
+                    unavailable:
+                      "No speech model is installed.\nRun `framekeep-core models get large-v3-turbo-q5_0 --yes` " +
+                      "or choose one in Settings. This machine has 16 GB RAM -> large-v3-turbo-q5_0 (574 MiB).",
+                  }
+                : {
+                    available: true,
+                    cli: "C:\\Program Files\\WindowsApps\\Framekeep\\whisper\\whisper-cli.exe",
+                    model: "C:\\Users\\demo\\.framekeep\\models\\ggml-large-v3-turbo-q5_0.bin",
+                    unavailable: null,
+                  },
+              cache: { root: "C:\\Users\\demo\\.framekeep\\cache", folders: 7, keep_days: 7 },
+              selection: { scene_threshold: 0.012, min_gap_seconds: 5.0, max_gap_seconds: 15.0 },
+              models_dir: "C:\\Users\\demo\\.framekeep\\models",
+              ram_gb: 16,
+            };
+          }
+          case "paste_from_window":
+            return "The harness has no clipboard.";
+          case "remove_recording":
+            return null;
+          default:
+            throw new Error(`harness has no stub for ${cmd}`);
+        }
+      },
+    },
+    event: {
+      listen: async () => () => {},
+    },
+  };
+
+  // Adopt the real page: stylesheet links, then markup, then its modules.
+  const doc = new DOMParser().parseFromString(
+    await (await fetch("index.html")).text(),
+    "text/html"
+  );
+  for (const link of doc.head.querySelectorAll("link")) {
+    document.head.append(document.adoptNode(link));
+  }
+  const scripts = [...doc.body.querySelectorAll("script[src]")].map((s) =>
+    s.getAttribute("src")
+  );
+  for (const child of [...doc.body.children]) {
+    if (child.tagName !== "SCRIPT") document.body.append(document.adoptNode(child));
+  }
+  // BEFORE the modules load, not after. setup.js runs its first-run check at
+  // import time -- "no flag, no hash, so show the front door" -- so a flag set
+  // afterwards is set too late to stop anything. It was, and every queue shot
+  // came out byte-identical to the first-setup shot: right filename, wrong
+  // screen, and nothing anywhere said so.
+  if (shot && shotScreen !== "first-setup") localStorage.setItem("setupSeen", "1");
+
+  // Plain URLs on purpose. Staleness is handled by serve.py's `no-store`
+  // header, NOT by stamping a query here: a module's own relative imports do
+  // not inherit the query, so `review.js` importing "./queue.js" would load a
+  // SECOND copy of a module already loaded as "queue.js?t=...". Two instances,
+  // two sets of listeners, every click handled twice -- caught when one menu
+  // item fired its command twice in a row. Measured 18/08.
+  const uiBase = new URL("../ui/", location.href);
+  for (const src of scripts) {
+    await import(new URL(src, uiBase).href);
+  }
+
+  if (shotScreen === "review") location.hash = `review/${demo.DEMO_HANDLE}`;
+  if (shotScreen === "first-setup") location.hash = "setup";
+  if (shotScreen === "settings") location.hash = "settings";
+</script>
+</body>
+</html>

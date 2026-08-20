@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Acme demo frame</title>
+<!--
+  The fake app being "screen-recorded" in demo data (screenshots.md §2).
+  Rendered at exactly 1920×1080 and photographed into fixtures/acme-*.png.
+
+  Not Framekeep's palette on purpose: this is somebody else's SaaS on the
+  user's screen, so it wears a generic cool-blue look.
+
+  Rules from screenshots.md it must obey:
+    - no value that looks like a real credential; the key carries EXAMPLE
+      in its body and ends in 4f2a so the demo detection chip
+      `sk-••••••4f2a` visibly refers to it
+    - example.com only (RFC 2606), no real brands beyond the fictional Acme
+    - the sensitive values carry id="secret"; ?measure=1 writes that
+      element's rect into document.title, so demo.js's detection boxes come
+      from a measurement of THIS file, not from a guess. Re-run the measure
+      step (shoot.ps1 prints it) whenever this layout changes.
+-->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    color: #1c2433;
+    background: #eef1f6;
+    display: flex;
+  }
+  .side {
+    width: 264px; height: 100%;
+    background: #101828;
+    color: #98a4b8;
+    padding: 28px 20px;
+    flex: none;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 600; font-size: 17px; margin-bottom: 36px; }
+  .logo .mark { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #4f7df9, #7b5df6); }
+  .nav-item { padding: 11px 12px; border-radius: 8px; margin-bottom: 4px; font-size: 14.5px; }
+  .nav-item.sel { background: #1d2939; color: #fff; }
+  .side .foot { margin-top: 420px; border-top: 1px solid #1d2939; padding-top: 18px; font-size: 13px; }
+  .main { flex: 1; padding: 34px 48px; }
+  .crumbs { color: #66718a; font-size: 13.5px; }
+  h1 { font-size: 26px; font-weight: 650; margin: 10px 0 4px; }
+  .sub { color: #66718a; margin-bottom: 26px; }
+  .toolbar { display: flex; justify-content: space-between; margin-bottom: 18px; }
+  .btn {
+    display: inline-block; padding: 10px 16px; border-radius: 8px;
+    background: #3b63f3; color: #fff; font-weight: 550; font-size: 14px;
+  }
+  .btn.ghost { background: #fff; color: #1c2433; border: 1px solid #d4dae6; }
+  .card {
+    background: #fff; border: 1px solid #dde3ee; border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(16, 24, 40, 0.05);
+  }
+  .card + .card { margin-top: 22px; }
+  .card-head { padding: 18px 24px; border-bottom: 1px solid #e8edf5; font-weight: 600; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .pill { font-size: 12px; color: #175c37; background: #e2f5ea; padding: 3px 10px; border-radius: 99px; font-weight: 550; }
+  .row { display: flex; align-items: center; gap: 16px; padding: 17px 24px; border-bottom: 1px solid #eef2f8; }
+  .row:last-child { border-bottom: 0; }
+  .label { width: 210px; color: #66718a; font-size: 14px; flex: none; }
+  .mono {
+    font-family: Consolas, ui-monospace, monospace;
+    font-size: 15px;
+    background: #f4f6fb; border: 1px solid #dde3ee; border-radius: 7px;
+    padding: 4px 10px;
+  }
+  .meta { color: #8b95aa; font-size: 13px; margin-left: auto; }
+  .avatar { width: 34px; height: 34px; border-radius: 99px; color: #fff; font-size: 14px; font-weight: 600; display: grid; place-items: center; flex: none; }
+  .chart { height: 190px; margin: 20px 24px; border-radius: 8px;
+    background:
+      linear-gradient(to top, rgba(59, 99, 243, 0.10), transparent 65%),
+      repeating-linear-gradient(to right, transparent 0 118px, #eef2f8 118px 119px),
+      repeating-linear-gradient(to top, transparent 0 45px, #eef2f8 45px 46px),
+      #fbfcfe;
+    position: relative; border: 1px solid #e8edf5;
+  }
+  .chart svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+</style>
+</head>
+<body>
+  <aside class="side">
+    <div class="logo"><span class="mark"></span>Acme Cloud</div>
+    <div class="nav-item">Overview</div>
+    <div class="nav-item">Transactions</div>
+    <div class="nav-item">Customers</div>
+    <div class="nav-item sel" id="nav-a">API keys</div>
+    <div class="nav-item">Webhooks</div>
+    <div class="nav-item">Settings</div>
+    <div class="foot">acme-staging · us-east-1</div>
+  </aside>
+  <main class="main" id="main"></main>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  // ?measure=<page> doubles as the page choice, so measure URLs never need
+  // an ampersand -- one survived two shells mangled once already.
+  const page = params.get("page") ?? params.get("measure") ?? "keys";
+  const main = document.getElementById("main");
+
+  if (page === "keys") {
+    main.innerHTML = `
+      <div class="crumbs">Developers / API keys</div>
+      <h1>API keys</h1>
+      <div class="sub">Manage keys and permissions for the payments API.</div>
+      <div class="toolbar"><span class="btn ghost">Documentation</span><span class="btn">+ Create new key</span></div>
+      <div class="card">
+        <div class="card-head">Live secret key <span class="pill">Active</span></div>
+        <!-- x=560 y=348: the key row. The detection box in demo.js points here. -->
+        <div class="row" style="height:64px">
+          <span class="label">Secret key</span>
+          <span class="mono" id="secret">sk-live-EXAMPLE-0000-4f2a</span>
+          <span class="meta">Created 2 months ago · Last used today</span>
+        </div>
+        <div class="row" style="height:64px">
+          <span class="label">Publishable key</span>
+          <span class="mono">pk-live-EXAMPLE-8817-c3d1</span>
+          <span class="meta">Safe for client-side code</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">Requests, last 7 days</div>
+        <div class="chart">
+          <svg viewBox="0 0 1500 190" preserveAspectRatio="none">
+            <path d="M0,150 C120,138 200,96 320,102 C450,108 520,60 660,66 C800,72 880,38 1020,46 C1160,54 1260,28 1500,34"
+                  fill="none" stroke="#3b63f3" stroke-width="3"/>
+          </svg>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById("nav-a").classList.remove("sel");
+    document.querySelectorAll(".nav-item")[5].classList.add("sel");
+    main.innerHTML = `
+      <div class="crumbs">Settings / Team</div>
+      <h1>Team members</h1>
+      <div class="sub">People with access to this workspace.</div>
+      <div class="toolbar"><span class="btn ghost">Manage roles</span><span class="btn">+ Invite member</span></div>
+      <div class="card">
+        <div class="card-head">Members <span class="pill">3 active</span></div>
+        <!-- x=560 y=404: the email row. The detection box in demo.js points here. -->
+        <div class="row" style="height:66px">
+          <span class="avatar" style="background:#7b5df6">AL</span>
+          <span class="label">Alice Lund · Owner</span>
+          <span class="mono" id="secret">alice@example.com</span>
+          <span class="meta">Joined Mar 2025</span>
+        </div>
+        <div class="row" style="height:66px">
+          <span class="avatar" style="background:#3b9df3">BN</span>
+          <span class="label">Bob Nguyen · Developer</span>
+          <span class="mono">bob@example.com</span>
+          <span class="meta">Joined Jun 2025</span>
+        </div>
+        <div class="row" style="height:66px">
+          <span class="avatar" style="background:#eba23b">CP</span>
+          <span class="label">Carol Park · Analyst</span>
+          <span class="mono">carol@example.com</span>
+          <span class="meta">Joined Jan 2026</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">Billing contact</div>
+        <div class="row" style="height:64px">
+          <span class="label">Invoices sent to</span>
+          <span class="mono">billing@example.com</span>
+          <span class="meta">Monthly, on the 1st</span>
+        </div>
+      </div>`;
+  }
+
+  // ?measure=1 -- report where the sensitive value actually sits, so the demo
+  // detection boxes are measurements, never guesses.
+  if (params.get("measure")) {
+    const r = document.getElementById("secret").getBoundingClientRect();
+    document.title = `RECT ${page} ${Math.round(r.x)} ${Math.round(r.y)} ${Math.round(r.width)} ${Math.round(r.height)}`;
+  } else {
+    // Diagnosis line: what search string did this load actually carry?
+    document.title = `Acme demo frame | search[${location.search}]`;
+  }
+</script>
+</body>
+</html>

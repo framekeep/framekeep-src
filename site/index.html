@@ -1,0 +1,713 @@
+<!doctype html>
+<!--
+  Framekeep landing page. S8.1, v4 (20/08) -- answers the owner's review of v3.
+
+  This file is served verbatim at framekeep.app, so it is read by anyone who
+  opens view-source. It carries the reasoning behind the layout and nothing
+  else -- an earlier version quoted the owner's review notes word for word,
+  which published private feedback on the owner's own domain by accident.
+
+  The layout answers faults that were named in review: the container was
+  1200px on a 1890px screen, so a third of the viewport was empty margin; the
+  nav was a full-width rule where the reference uses a floating rounded bar;
+  the page had no field changes from top to bottom; and it had almost no
+  motion. All four are addressed below.
+
+  THE TWO HONESTY CONSTRAINTS THAT MOVED, AND EXACTLY HOW FAR
+  -----------------------------------------------------------
+  v1-v3 carried a rule: no GitHub anywhere, because the repository is private
+  and every such link is dead. The owner has now asked for the mark, on the
+  grounds that a source-available build is coming. Measured before building:
+
+      github.com/framekeep            -> 200   (the organisation page)
+      github.com/framekeep/framekeep  -> 404   (the repository, still private)
+
+  So the button points at the ORGANISATION, which resolves today, and never at
+  the repository, which does not. The label is "GitHub" and nothing more -- no
+  star count we do not have, and still no "Open Source" or "MIT" anywhere,
+  because BUSL-1.1 is source-available and the source is not public yet. The
+  day the repo opens, change one href.
+
+  The Microsoft Store badge is an ANNOUNCEMENT, not a button: it is a <span>,
+  it carries the words "Coming soon", and it has no href. The rule it must not
+  break is "no primary action leading nowhere" -- a badge that never claims to
+  be clickable does not break it. It becomes a link when the listing exists.
+
+  Everything else from v3 is unchanged and still true: copy is from
+  _design_system/copy.md, colours and their measurements are in
+  _design_system/landing-palette-check.py (19/19 meaningful pairs pass), ember
+  marks the primary action and is otherwise only atmosphere, text on ember is
+  ink #1A0B02 and never white (the reference ships white at 2.39, failing AA),
+  four steps not three, and the page is self-contained -- no external fonts,
+  scripts or images, which is what the CSP in vercel.json enforces.
+
+  MOTION SAFETY, unchanged and load-bearing: the hidden state only exists
+  under html.motion; only script adds that class; and it is added LAST, after
+  every target is under observation, inside a try/catch. Anything that throws
+  leaves the page visible and static. prefers-reduced-motion never adds it.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Framekeep — Show your AI what you mean</title>
+<meta name="description" content="Framekeep turns a screen recording into key frames and a transcript your AI can read — prepared on your own machine, and nothing reaches your AI until you approve it." />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#0E0918" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cg fill='none' stroke='%239C8FCB' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M1.8 9s2.7-4.7 7.2-4.7S16.2 9 16.2 9s-2.7 4.7-7.2 4.7S1.8 9 1.8 9Z'/%3E%3Ccircle cx='9' cy='9' r='2.1'/%3E%3C/g%3E%3C/svg%3E" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"></div>
+<div class="aura" aria-hidden="true"></div>
+<div class="grid-dots" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M1.8 9s2.7-4.7 7.2-4.7S16.2 9 16.2 9s-2.7 4.7-7.2 4.7S1.8 9 1.8 9Z"/><circle cx="9" cy="9" r="2.1"/></svg>
+      Framekeep
+    </a>
+    <span class="pill-local"><span class="dot" aria-hidden="true"></span>Local</span>
+    <nav class="nav-links" aria-label="Main">
+      <details class="menu">
+        <summary>Product</summary>
+        <div class="menu-pop">
+          <a href="#how">How it works<span>Four steps, and you are one of them</span></a>
+          <a href="#redaction">Privacy &amp; redaction<span>What is found, and what you hide</span></a>
+          <a href="#screens">Built for screens<span>Why a screen recording is not just video</span></a>
+          <a href="#clients">Works with your AI<span>Any MCP-compatible client</span></a>
+        </div>
+      </details>
+      <details class="menu">
+        <summary>Resources</summary>
+        <div class="menu-pop">
+          <a href="docs.html">Docs<span>Install the adapter, connect your client</span></a>
+          <a href="changelog.html">Changelog<span>What shipped, and when</span></a>
+          <a href="privacy.html">Privacy<span>What Framekeep reads, keeps and sends</span></a>
+          <a href="security.html">Security<span>Reporting, scope, and the limits</span></a>
+        </div>
+      </details>
+    </nav>
+    <div class="nav-right">
+      <details class="menu menu-mobile">
+        <summary aria-label="Open menu"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M2.5 5h13M2.5 9h13M2.5 13h13"/></svg></summary>
+        <div class="menu-pop">
+          <h4>Product</h4>
+          <a href="#how">How it works</a>
+          <a href="#redaction">Privacy &amp; redaction</a>
+          <a href="#screens">Built for screens</a>
+          <a href="#clients">Works with your AI</a>
+          <h4>Resources</h4>
+          <a href="docs.html">Docs</a>
+          <a href="changelog.html">Changelog</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="security.html">Security</a>
+          <a href="https://github.com/framekeep" rel="noopener noreferrer">GitHub</a>
+        </div>
+      </details>
+      <a class="btn btn-ghost nav-gh" href="https://github.com/framekeep" rel="noopener noreferrer">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <a class="btn btn-ember" href="#get-started">Get started</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- 1 — Hero -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+      <span class="hero-badge" data-reveal><span class="spark" aria-hidden="true"></span>Private. Local. Powerful.</span>
+      <h1 data-reveal style="--d:50ms"><span class="word" style="--w:0">Show</span> <span class="word" style="--w:1">your</span> <span class="word" style="--w:2">AI</span> <span class="word" style="--w:3">what</span> <span class="word" style="--w:4">you</span> <span class="word" style="--w:5">mean.</span></h1>
+      <p class="hero-sub" data-reveal style="--d:150ms">Framekeep sees your screen, hides what shouldn't leave, and lets your AI see only what you approved — locally, privately, and on your terms.</p>
+
+      <div class="cta" data-reveal style="--d:230ms">
+        <div class="cmd-row">
+          <span class="cmd">
+            <span class="prompt" aria-hidden="true">$</span>
+            <span class="cmd-text">npx framekeep-mcp init</span>
+          </span>
+        </div>
+        <div class="cmd-row" style="margin-top:4px">
+          <!-- Announcement, not a button: no href, and it says so. -->
+          <span class="store-badge">
+            <span class="ms" aria-hidden="true">
+              <i style="background:#F25022"></i><i style="background:#7FBA00"></i>
+              <i style="background:#00A4EF"></i><i style="background:#FFB900"></i>
+            </span>
+            <span><b>Microsoft Store</b><span class="soon">Coming soon</span></span>
+          </span>
+        </div>
+        <p class="cta-note">The adapter above works today, on its own. Needs <a href="https://nodejs.org" rel="noopener noreferrer">Node.js&nbsp;20+</a>.</p>
+      </div>
+
+      <div class="trust" data-stagger>
+        <div class="trust-item" data-reveal>
+          <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="2.5" y="4" width="13" height="9" rx="2"/><path d="M6 16h6"/></svg>
+          <div><b>100% Local</b><span>Processing happens on your device</span></div>
+        </div>
+        <div class="trust-item" data-reveal>
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.8 15 4v5c0 3.6-2.6 6.2-6 7.2C5.6 15.2 3 12.6 3 9V4l6-2.2Z"/></svg>
+          <div><b>Privacy First</b><span>You decide what stays</span></div>
+        </div>
+        <div class="trust-item" data-reveal>
+          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M1.8 9s2.7-4.7 7.2-4.7S16.2 9 16.2 9s-2.7 4.7-7.2 4.7S1.8 9 1.8 9Z"/><circle cx="9" cy="9" r="2.1"/></svg>
+          <div><b>Nothing leaves unseen</b><span>Every frame passes your eyes</span></div>
+        </div>
+      </div>
+      </div>
+
+      <div class="hero-visual hero-shot" data-reveal style="--d:280ms">
+        <div class="hero-shot-inner">
+          <figure class="shot-frame demo-stage" style="margin:0" data-demo>
+            <div class="demo-frames">
+              <img class="demo-frame is-on" src="img/setup-dark.webp" width="1536" height="1024" loading="eager" decoding="async"
+                   alt="The Framekeep app: a paste area for a screen recording, the one-time step that connects your AI client, and optional setup rows." />
+              <img class="demo-frame" src="img/queue-dark.webp" width="1536" height="1024" loading="eager" decoding="async"
+                   alt="The queue: recordings listed with duration, key frame count, processing stage, and how many sensitive items were found." />
+              <img class="demo-frame" src="img/review-dark.webp" width="1536" height="1024" loading="eager" decoding="async"
+                   alt="The review screen: a frame from a recording with detected items listed beside it, each one ticked or unticked before anything is approved." />
+            </div>
+            <span class="demo-ping" aria-hidden="true"></span>
+            <span class="demo-cursor" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 2.5 19.2 11.4l-6.1.7 3.3 6.6-2.6 1.3-3.3-6.6-4.5 4.2Z" fill="#FFFFFF" stroke="#14101F" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            </span>
+          </figure>
+        </div>
+        <p class="demo-cap"><span class="demo-cap-n" aria-hidden="true">1</span><span class="demo-cap-t">Paste or drop a screen recording.</span></p>
+        <div class="demo-track" aria-hidden="true">
+          <span class="demo-tick"><i></i></span><span class="demo-tick"><i></i></span>
+          <span class="demo-tick"><i></i></span><span class="demo-tick"><i></i></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 — Client marquee. Only clients this project has actually run against;
+       "any MCP client" is the claim that covers the rest, and it is in copy.md. -->
+  <section class="marquee" aria-labelledby="mq-h">
+    <p class="marquee-head" id="mq-h" data-reveal>Speaks MCP — works with the tools you already use</p>
+    <div class="marquee-rail" data-reveal style="--d:80ms" aria-hidden="true">
+      <div class="marquee-track" data-mq></div>
+      <div class="marquee-track" data-mq></div>
+    </div>
+    <div class="marquee-rail rev" data-reveal style="--d:150ms" aria-hidden="true">
+      <div class="marquee-track" data-mq data-mq-rev></div>
+      <div class="marquee-track" data-mq data-mq-rev></div>
+    </div>
+  </section>
+
+  <!-- 3 — Problem -->
+  <section class="field field-deep">
+    <div class="wrap">
+      <div class="head-center" data-reveal>
+        <p class="eyebrow">The problem</p>
+        <h2>Screens carry more than you want to share.</h2>
+        <p class="lede">A screen recording is the fastest way to show an AI what happened. It is also the fastest way to hand it an API key, a customer's email, and a staging URL you forgot was on screen.</p>
+      </div>
+      <div class="grid grid-4" data-stagger>
+        <div class="card" data-reveal>
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M9 2 16 15H2L9 2Z"/><path d="M9 7v4M9 13h.01"/></svg></div>
+          <h4>Too much risk</h4>
+          <p>Keys, tokens and addresses sit in plain sight in the frames you would otherwise share without looking.</p>
+        </div>
+        <div class="card" data-reveal>
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M9 2v6M5.5 4.2a5.5 5.5 0 1 0 7 0"/></svg></div>
+          <h4>No control</h4>
+          <p>Upload a video to a service and the decision about what it keeps has already been made for you.</p>
+        </div>
+        <div class="card" data-reveal>
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><rect x="2.5" y="4" width="13" height="9" rx="2"/><path d="M6 16h6M6.5 8.5l2 2 3-3.5"/></svg></div>
+          <h4>Not built for screens</h4>
+          <p>Generic video tools sample frames on a timer. Interfaces change in bursts, and the timer misses them.</p>
+        </div>
+        <div class="card" data-reveal>
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M4 12.5A3.5 3.5 0 0 1 4.6 5.6a4.8 4.8 0 0 1 9 1.3A3 3 0 0 1 13 12.5Z"/></svg></div>
+          <h4>Your data, their cloud</h4>
+          <p>Most of the pipeline runs somewhere you cannot see, on hardware you do not own.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — How it works. FOUR steps: the three-step version merged the review
+       away and promised a send that does not happen. -->
+  <section id="how" class="field field-cool">
+    <div class="wrap">
+      <div class="head-center" data-reveal>
+        <p class="eyebrow">How it works</p>
+        <h2>Four steps, and you are one of them.</h2>
+        <p class="lede">The third step is a person looking at what was found. It is not optional, and there is no button to skip it.</p>
+      </div>
+      <div class="steps" data-stagger>
+        <div class="step" data-reveal>
+          <span class="step-n">1</span>
+          <div class="step-body">
+            <h4>Paste or drop a screen recording.</h4>
+            <p>Copy a file and press <span class="kbd">Ctrl&nbsp;+&nbsp;Shift&nbsp;+&nbsp;V</span>, or drop it into the window.</p>
+          </div>
+        </div>
+        <div class="step" data-reveal>
+          <span class="step-n">2</span>
+          <div class="step-body">
+            <h4>Framekeep reads the frames and the speech, on this machine.</h4>
+            <p>Frames are chosen where the picture actually changes. Speech is transcribed locally with Whisper.</p>
+          </div>
+        </div>
+        <div class="step" data-reveal>
+          <span class="step-n">3</span>
+          <div class="step-body">
+            <h4>You review what it found and hide anything that shouldn't leave.</h4>
+            <p>Everything detected is shown with a box around it. You decide what gets blacked out, and you can draw over anything the scan missed.</p>
+          </div>
+        </div>
+        <div class="step" data-reveal>
+          <span class="step-n">4</span>
+          <div class="step-body">
+            <h4>Ask your AI about the recording. Nothing reaches it until you do.</h4>
+            <p>Approving unlocks a recording. It does not deliver one — your AI asks, and reads only what you approved.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 — Architecture. The final node is deliberately NOT "Send to your AI":
+       the app pushes nothing, and the button once called that was renamed for
+       the same reason. -->
+  <section>
+    <div class="wrap">
+      <div class="head-center" data-reveal>
+        <p class="eyebrow">Architecture</p>
+        <h2>All on your machine. End to end.</h2>
+        <p class="lede">Framekeep is the perception layer, not the reasoning layer. It decodes, selects, transcribes and redacts. Your AI does the thinking.</p>
+      </div>
+      <div class="pipe-wrap" data-reveal>
+        <div class="pipe-line" aria-hidden="true"></div>
+        <div class="pipe" data-stagger>
+          <div class="pipe-node" data-reveal><span class="n">01</span><b>Screen recording</b><span>Pasted, dropped, or picked up from a watched folder</span></div>
+          <div class="pipe-node" data-reveal><span class="n">02</span><b>Extract frames</b><span>Scene-aware, not fixed-interval</span></div>
+          <div class="pipe-node" data-reveal><span class="n">03</span><b>Detect &amp; redact</b><span>OCR and pattern rules, then your review</span></div>
+          <div class="pipe-node" data-reveal><span class="n">04</span><b>Transcribe (local)</b><span>Whisper, on your CPU</span></div>
+          <div class="pipe-node is-final" data-reveal><span class="n">05</span><b>Your AI reads what you approved</b><span>Over MCP, when it asks</span></div>
+        </div>
+      </div>
+      <p class="pipe-foot" data-reveal>
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 9.5 7 13l7.5-8"/></svg>
+        Everything is processed locally. Your video never leaves your machine.
+      </p>
+    </div>
+  </section>
+
+  <!-- 6 — Privacy. Every sentence is from copy.md's "correct statements" list. -->
+  <section id="redaction" class="field field-cool">
+    <div class="wrap split">
+      <div>
+        <div class="head-left" data-reveal>
+          <p class="eyebrow">Privacy &amp; redaction</p>
+          <h2>Privacy isn't a feature. It's the foundation.</h2>
+        </div>
+        <div class="privacy-grid" data-stagger>
+          <div class="card" data-reveal>
+            <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><rect x="2.5" y="4" width="13" height="9" rx="2"/><path d="M6 16h6"/></svg></div>
+            <h4>Local by default</h4>
+            <p>Decoding, frame selection and transcription all run on your machine.</p>
+          </div>
+          <div class="card" data-reveal>
+            <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M9 1.8 15 4v5c0 3.6-2.6 6.2-6 7.2C5.6 15.2 3 12.6 3 9V4l6-2.2Z"/><path d="M9 7v3M9 11.5h.01"/></svg></div>
+            <h4>You're in control</h4>
+            <p>A recording waits until you have looked at it. There is no send-anyway button.</p>
+          </div>
+          <div class="card" data-reveal>
+            <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><rect x="3" y="3" width="12" height="12" rx="2"/><path d="M6 9h6"/></svg></div>
+            <h4>Redaction you approve</h4>
+            <p>Finds API keys, tokens and emails — and never sends a frame you haven't seen.</p>
+          </div>
+          <div class="card" data-reveal>
+            <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M4 12.5A3.5 3.5 0 0 1 4.6 5.6a4.8 4.8 0 0 1 9 1.3A3 3 0 0 1 13 12.5Z"/><path d="m6.5 14.5 5-5"/></svg></div>
+            <h4>No cloud. No accounts.</h4>
+            <p>Nothing to sign up for. The one network request is downloading a speech model, and only when you ask.</p>
+          </div>
+        </div>
+      </div>
+      <div class="split-media" data-reveal style="--d:120ms">
+        <figure class="shot-frame" style="margin:0">
+          <img src="img/review-dark.webp" width="1536" height="1024" loading="lazy" decoding="async"
+               alt="The review screen: a frame from a recording with detected items listed beside it, each one ticked or unticked before anything is approved." />
+        </figure>
+        <p class="shot-caption">Detected values are shown partly masked — enough to recognise, not enough to leak.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — Built for screen recordings. Image on the LEFT. -->
+  <section id="screens">
+    <div class="wrap split split-flip">
+      <div>
+        <div class="head-left" data-reveal>
+          <p class="eyebrow">Built for screen recordings</p>
+          <h2>Built for how you work.</h2>
+          <p class="lede">Not a general video tool with a screen-recording mode. Every default in Framekeep was measured against real interface content.</p>
+        </div>
+        <ul class="bullets" data-stagger>
+          <li data-reveal><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 9.5 7 13l7.5-8"/></svg><span><b>Auto-detect key frames.</b> Interfaces change in bursts, not on a timer. Frame selection follows the picture, so a five-second scroll does not become forty near-identical frames.</span></li>
+          <li data-reveal><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 9.5 7 13l7.5-8"/></svg><span><b>Find &amp; redact secrets — with your approval.</b> Text is read off each frame and checked against pattern rules, plus any words you add yourself.</span></li>
+          <li data-reveal><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 9.5 7 13l7.5-8"/></svg><span><b>Local transcription with Whisper.</b> Timestamped, so your AI can line up what was said with what was on screen.</span></li>
+          <li data-reveal><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 9.5 7 13l7.5-8"/></svg><span><b>Queue, review, and manage recordings.</b> A dense list showing the real stage of each one — extracting, transcribing, scanning, waiting for you.</span></li>
+        </ul>
+      </div>
+      <div class="split-media" data-reveal>
+        <figure class="shot-frame" style="margin:0">
+          <img src="img/queue-dark.webp" width="1536" height="1024" loading="lazy" decoding="async"
+               alt="The queue: recordings listed with duration, key frame count, processing stage, and how many sensitive items were found." />
+        </figure>
+        <p class="shot-caption">Each row says which stage it is in, not just that something is happening.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 — Works with your AI -->
+  <section id="clients" class="field field-deep">
+    <div class="wrap">
+      <div class="head-center" data-reveal>
+        <p class="eyebrow">Works with your AI</p>
+        <h2>Works with the AI tools you already use.</h2>
+        <p class="lede">Your AI stays the brain. Framekeep gives it eyes. It doesn't replace your AI tools — it makes them safer and smarter. Supports any MCP-compatible client.</p>
+      </div>
+      <div class="grid grid-2" data-stagger>
+        <div class="card" data-reveal>
+          <h4>Two tools, in the right order</h4>
+          <p><span class="mono">video_map</span> answers what is in a recording and when — cheap, text-shaped, no images. <span class="mono">video_frames</span> returns the frames for a moment your AI names. The map comes first, so nothing pulls twenty frames to answer a question about one.</p>
+        </div>
+        <div class="card" data-reveal>
+          <h4>One command, and never again</h4>
+          <p>The config Framekeep writes points at an absolute path, never at <span class="mono">npx</span>. On Windows a client that spawns a bare <span class="mono">npx</span> fails outright — measured, and it is why a competing adapter does not start there at all.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 — Local, and what the licence actually is. -->
+  <section>
+    <div class="wrap">
+      <div class="head-center" data-reveal>
+        <p class="eyebrow">Local by construction</p>
+        <h2>No account. No cloud. No background watching.</h2>
+        <p class="lede">Framekeep reads your clipboard when you paste, and at no other time. There is no clipboard monitor, no telemetry, and nothing to log in to.</p>
+      </div>
+      <div class="grid grid-3" data-stagger>
+        <div class="card" data-reveal>
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M9 2.5 15 5v4.5c0 3.4-2.5 5.9-6 6.8-3.5-.9-6-3.4-6-6.8V5l6-2.5Z"/></svg></div>
+          <h4>Nothing to sign up for</h4>
+          <p>No account, no API key for the default setup, no server on our side to send anything to.</p>
+        </div>
+        <div class="card" data-reveal>
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M6 6.5 3 9l3 2.5M12 6.5 15 9l-3 2.5M10.5 4l-3 10"/></svg></div>
+          <h4>The adapter is published</h4>
+          <p>The piece that talks to your AI client is on npm as <span class="mono">framekeep-mcp</span>. You can read exactly what it does before you run it.</p>
+        </div>
+        <div class="card" data-reveal>
+          <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M9 2.5v13M4 6h10M5.5 6 3.5 10.5h4L5.5 6ZM12.5 6l-2 4.5h4L12.5 6Z"/></svg></div>
+          <h4>Source available</h4>
+          <p>Licensed BUSL-1.1: use it for anything, including commercially and inside a company. Each version converts to Apache&nbsp;2.0 four years after it is released. Not open source — the one thing the licence withholds is selling Framekeep itself.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 — Closing panel -->
+  <section class="final" id="get-started">
+    <div class="wrap">
+      <div class="final-panel" data-reveal>
+        <h2>Give your AI eyes.</h2>
+        <p class="lede">Your screen. Your data. Your AI. Private by default.</p>
+        <div class="cta">
+          <div class="cmd-row">
+            <span class="cmd">
+              <span class="prompt" aria-hidden="true">$</span>
+              <span class="cmd-text">npx framekeep-mcp init</span>
+            </span>
+          </div>
+        </div>
+        <p class="final-meta">Windows 10+ · Node.js 20+ for the adapter · No sign up · All local</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <span class="brand"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M1.8 9s2.7-4.7 7.2-4.7S16.2 9 16.2 9s-2.7 4.7-7.2 4.7S1.8 9 1.8 9Z"/><circle cx="9" cy="9" r="2.1"/></svg>Framekeep</span>
+        <p>Screen recordings your AI can actually see — prepared on your own machine, and nothing reaches it until you approve it.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Product</h4>
+        <a href="index.html#how">How it works</a>
+        <a href="index.html#redaction">Privacy &amp; redaction</a>
+        <a href="index.html#screens">Built for screens</a>
+        <a href="index.html#clients">Works with your AI</a>
+      </div>
+      <div class="foot-col">
+        <h4>Resources</h4>
+        <a href="docs.html">Docs</a>
+        <a href="changelog.html">Changelog</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="security.html">Security</a>
+        <a href="https://github.com/framekeep" rel="noopener noreferrer"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>GitHub</a>
+      </div>
+    </div>
+    <div class="foot-row">
+      <span>© 2026 Framekeep · All rights reserved.</span>
+      <span class="foot-links">
+        <a href="mailto:support@framekeep.app">support@framekeep.app</a>
+        <a href="security.html">Report a vulnerability</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement;
+
+  /* ---------------------------------------------------------------
+     Client marks. Built here rather than written eight times into the
+     markup, because a marquee needs the set duplicated to loop without
+     a seam. Each mark carries its own brand colour; the row is
+     aria-hidden because the same names are already in the prose above.
+     --------------------------------------------------------------- */
+  var MARKS = [
+    ['Claude Code', '#D97757', '<path d="M12 2.6 13.4 9l5-3.1-3.6 5.1 6 .9-6 .9 3.6 5.1-5-3.1L12 21.4 10.6 15l-5 3.1 3.6-5.1-6-.9 6-.9-3.6-5.1 5 3.1L12 2.6Z"/>'],
+    ['Cursor', '#E4E4E7', '<path d="M12 2.2 20.6 7v10L12 21.8 3.4 17V7L12 2.2Zm0 2.3L5.4 8.2v7.6L12 19.5l6.6-3.7V8.2L12 4.5Z"/><path d="M12 8.2 16.8 11v5.4L12 19.1 7.2 16.4V11L12 8.2Z" opacity=".55"/>'],
+    ['VS Code', '#0098FF', '<path d="M17.6 2.2 21.4 4v16l-3.8 1.8-8-7.6-4.2 3.2L2.6 16V8l2.8-1.4 4.2 3.2 8-7.6Zm.3 4.5-5.6 5.3 5.6 5.3V6.7Z"/>'],
+    ['Codex', '#E8E8EA', '<path d="M12 2.6c2 0 3.7 1.1 4.6 2.7 1.8.1 3.4 1.2 4.1 2.9.8 1.8.4 3.8-.8 5.2.4 1.8-.3 3.7-1.9 4.8-1.6 1.1-3.6 1-5.1 0-1.7.7-3.7.4-5.1-.8-1.8-.1-3.4-1.2-4.1-2.9-.8-1.8-.4-3.8.8-5.2-.4-1.8.3-3.7 1.9-4.8 1.2-.8 2.6-.9 3.9-.5A5.3 5.3 0 0 1 12 2.6Zm0 2.1c-.9 0-1.7.4-2.3 1l3.9 2.2c.3.2.5.5.5.9v4.6l1.8-1V8.6c0-.4-.2-.7-.5-.9l-2.4-1.4a2.9 2.9 0 0 0-1-1.6Zm-4.6 2.6c-.8.5-1.2 1.4-1.1 2.3l3.9-2.2c.3-.2.7-.2 1 0l4 2.3v-2.1c0-.4-.2-.7-.5-.9L11.9 4.3a2.9 2.9 0 0 0-4.5 3ZM5.5 12.4c-.4.9-.2 1.9.4 2.6V10.5c0-.4.2-.7.5-.9l4-2.3-1.8-1c-.3-.2-.7-.2-1 0L5.2 7.6a2.9 2.9 0 0 0 .3 4.8Zm12.9 4.4c.8-.5 1.2-1.4 1.1-2.3l-3.9 2.3c-.3.2-.7.2-1 0l-4-2.3v2.1c0 .4.2.7.5.9l2.4 1.4a2.9 2.9 0 0 0 4.9-2.1ZM12 10.1l-1.9 1.1v2.2l1.9 1.1 1.9-1.1v-2.2L12 10.1Z"/>'],
+    ['Any MCP client', '#9C8FCB', '<path d="M3.4 12.6 11 5a2.9 2.9 0 0 1 4.1 4.1L9 15.2M6.6 15.8l6.6-6.6a2.9 2.9 0 0 1 4.1 4.1l-6.1 6.1a2 2 0 0 0 0 2.8"/>', 1]
+  ];
+
+  function chip(m) {
+    var stroke = m[3] ? ' fill="none" stroke="' + m[1] + '" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"' : ' fill="' + m[1] + '"';
+    return '<span class="chip"><svg viewBox="0 0 24 24"' + stroke + ' aria-hidden="true">' + m[2] + '</svg>' + m[0] + '</span>';
+  }
+  var html = MARKS.map(chip).join('');
+  // The lower rail runs the set backwards. Same items, same colours, but the
+  // two rows no longer line up column-for-column, which is what made them
+  // read as one block sliding rather than two independent ribbons.
+  var htmlRev = MARKS.slice().reverse().map(chip).join('');
+  var tracks = document.querySelectorAll('[data-mq]');
+  for (var t = 0; t < tracks.length; t++) {
+    var h = tracks[t].hasAttribute('data-mq-rev') ? htmlRev : html;
+    tracks[t].innerHTML = h + h;
+  }
+
+  /* ---------------------------------------------------------------
+     Copy buttons are CREATED here rather than written into the markup.
+     With scripting off the command is still there and still selectable,
+     and no button sits on the page looking clickable while doing nothing.
+     --------------------------------------------------------------- */
+  var rows = document.querySelectorAll('.cmd-row');
+  for (var i = 0; i < rows.length; i++) {
+    (function (row) {
+      var el = row.querySelector('.cmd-text');
+      if (!el) return;                       // the Store badge row has none
+      var text = el.textContent.trim();
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-ember copy-btn';
+      btn.textContent = 'Copy';
+      var live = document.createElement('span');
+      live.className = 'sr-only';
+      live.setAttribute('role', 'status');
+      btn.addEventListener('click', function () {
+        function done() {
+          btn.textContent = 'Copied';
+          btn.classList.add('done');
+          live.textContent = 'Command copied to the clipboard';
+          setTimeout(function () {
+            btn.textContent = 'Copy';
+            btn.classList.remove('done');
+            live.textContent = '';
+          }, 1600);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () {});
+        }
+      });
+      row.appendChild(btn);
+      row.appendChild(live);
+    })(rows[i]);
+  }
+
+  /* ---------------------------------------------------------------
+     Hero walkthrough: the four steps of copy.md, played over the real
+     product screens with a pointer that presses the real controls.
+
+     Targets are fractions of the frame, not pixels, because the stage
+     is fluid; the script turns them into pixels against the stage's
+     own box and redoes that on resize. Each one sits on a control
+     that exists in that screenshot -- the paste area, a queue row, a
+     detection in the review list, the row's copy-prompt button.
+
+     Captions are the four steps from _design_system/copy.md, shortened
+     to one line each. The long form is in the How it works section.
+     --------------------------------------------------------------- */
+  // Each x/y was placed, rendered and looked at, then moved -- the first pass
+  // put beat 1 on the bottom edge of the drop area and beat 4 in the gap
+  // between two columns rather than on the row's copy button.
+  var BEATS = [
+    { frame: 0, x: .55, y: .25, cap: 'Paste or drop a screen recording.' },
+    { frame: 1, x: .30, y: .335, cap: 'Framekeep reads the frames and the speech, on this machine.' },
+    { frame: 2, x: .80, y: .43, cap: 'You review what it found and hide anything that shouldn’t leave.' },
+    // Row ONE, not row two. The copy-prompt button is locked until a recording
+    // is approved -- queue.js says so in as many words ("Approve <name> first
+    // -- then you can copy its prompt"). At y .30 the pointer sat on the row
+    // that is still transcribing, i.e. on a disabled control, which is a
+    // wrong claim about the product rather than a wrong pixel.
+    { frame: 1, x: .93, y: .205, cap: 'Ask your AI about the recording. Nothing reaches it until you do.' }
+  ];
+  var HOLD = 2600;   // ms per beat; the tick fill is told the same number
+
+  var stage = document.querySelector('[data-demo]');
+  if (stage && !reduced) (function () {
+    var frames = stage.querySelectorAll('.demo-frame');
+    var cursor = stage.querySelector('.demo-cursor');
+    var ping = stage.querySelector('.demo-ping');
+    var capBox = document.querySelector('.demo-cap');
+    var capTxt = document.querySelector('.demo-cap-t');
+    var capNum = document.querySelector('.demo-cap-n');
+    var ticks = document.querySelectorAll('.demo-tick');
+    var at = -1, timer = null, running = false;
+
+    function place(b) {
+      var w = stage.clientWidth, h = stage.clientHeight;
+      var x = (b.x * w - 4) + 'px', y = (b.y * h - 3) + 'px';
+      cursor.style.setProperty('--x', x);
+      cursor.style.setProperty('--y', y);
+      ping.style.setProperty('--x', x);
+      ping.style.setProperty('--y', y);
+    }
+
+    function step() {
+      at = (at + 1) % BEATS.length;
+      var b = BEATS[at];
+
+      for (var i = 0; i < ticks.length; i++) {
+        ticks[i].classList.toggle('is-done', i < at);
+        ticks[i].classList.remove('is-live');
+      }
+      place(b);
+
+      // Move, land, press, then swap the screen -- in that order, so the
+      // frame changes because the pointer clicked and not beside it.
+      timer = setTimeout(function () {
+        cursor.classList.add('is-press');
+        ping.classList.remove('is-fire');
+        void ping.offsetWidth;                 // restart the animation
+        ping.classList.add('is-fire');
+
+        timer = setTimeout(function () {
+          cursor.classList.remove('is-press');
+          for (var i = 0; i < frames.length; i++) frames[i].classList.toggle('is-on', i === b.frame);
+
+          capBox.classList.add('is-swap');
+          timer = setTimeout(function () {
+            capTxt.textContent = b.cap;
+            capNum.textContent = String(at + 1);
+            capBox.classList.remove('is-swap');
+          }, 240);
+
+          ticks[at].style.setProperty('--beat', HOLD + 'ms');
+          ticks[at].classList.add('is-live');
+          timer = setTimeout(step, HOLD);
+        }, 190);
+      }, 900);
+    }
+
+    function start() { if (!running) { running = true; step(); } }
+    function stop() { running = false; clearTimeout(timer); }
+
+    // Only while it is on screen: a loop running under the fold is heat with
+    // nobody watching, and it would also be mid-sequence when scrolled back to.
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        if (es[0].isIntersecting) start(); else stop();
+      }, { threshold: .25 }).observe(stage);
+    } else {
+      start();
+    }
+    stage.addEventListener('mouseenter', stop);
+    stage.addEventListener('mouseleave', start);
+    window.addEventListener('resize', function () { if (at >= 0) place(BEATS[at]); }, { passive: true });
+  })();
+
+  /* ---------------------------------------------------------------
+     Scroll: progress rail, nav surface, background drift, hero tilt.
+     One rAF-throttled handler for all four.
+     --------------------------------------------------------------- */
+  var nav = document.querySelector('.nav');
+  var shot = document.querySelector('.hero-shot-inner');
+  var ticking = false;
+
+  function frame() {
+    var y = window.scrollY;
+    var max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    root.style.setProperty('--scroll', (y / max).toFixed(4));
+    nav.classList.toggle('is-stuck', y > 20);
+    if (shot && !reduced) {
+      shot.style.setProperty('--lift', Math.min(y * 0.09, 46).toFixed(2));
+      shot.style.setProperty('--rise', Math.min(y / 420, 1).toFixed(3));
+    }
+    ticking = false;
+  }
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(frame);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  frame();
+
+  /* ---------------------------------------------------------------
+     Reveals. Order matters, and it is the difference between a landing
+     page and a blank one: html.motion is what makes [data-reveal]
+     invisible, so it is added LAST, only once every target is under
+     observation. If anything here throws, the class was never added and
+     the page is simply visible and static.
+     --------------------------------------------------------------- */
+  if (reduced || !('IntersectionObserver' in window)) return;
+
+  try {
+    var io = new IntersectionObserver(function (entries) {
+      for (var k = 0; k < entries.length; k++) {
+        // One toggle, both directions: it adds `in` on the way in and removes
+        // it once the element is completely past the top, which is what makes
+        // scrolling back up play the reveal again.
+        entries[k].target.classList.toggle('in', entries[k].isIntersecting);
+      }
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0 });
+
+    var targets = document.querySelectorAll('[data-reveal], .steps');
+    for (var j = 0; j < targets.length; j++) io.observe(targets[j]);
+
+    root.classList.add('motion');
+  } catch (e) {
+    root.classList.remove('motion');
+  }
+})();
+</script>
+
+<script src="nav.js"></script>
+
+</body>
+</html>

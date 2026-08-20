@@ -1,0 +1,1308 @@
+/*
+ * Every value from _design_system/tokens.md — Warm Stone + Muted Violet,
+ * hex approved 15/08/2026. The dark block was contrast-checked then and
+ * looked at across all four screens on 19/08 -- by Opus, standing in for the
+ * Fable pass CLAUDE.md asks for, which is still owed. That pass found what the
+ * contrast script could not: a status chip breaking across two lines.
+ *
+ * Layout constants from tokens.md: sidebar 290 · main padding 28 · gap 16 ·
+ * toolbar/tabs/table-header 44 · row 84 · thumbnail 82×58 r7 · footer 54.
+ */
+
+:root {
+  --bg: #f4f2ee;
+  --surface: #faf9f7;
+  --surface-elevated: #ffffff;
+  --surface-subtle: #f1eee8;
+  --text: #18181b;
+  --text-secondary: #64646c;
+  --text-muted: #6e6e78;
+  --border: #e2dfd8;
+  --border-strong: #d8d4cc;
+  --accent: #7567a8;
+  --accent-hover: #685a98;
+  --accent-soft: #eae6f4;
+  --accent-subtle: #f2eff8;
+  --tab-active-text: #5d5385;
+  --tab-active-border: #d8d0e9;
+  --success: #477051;
+  --success-soft: #eaf2ec;
+  --warning-text: #7a5a16;
+  --warning-soft: #f6eedb;
+  --warning-dot: #c99a3d;
+  --chip-processing-text: #7e5316;
+  --chip-processing-bg: #f7edd9;
+  --error: #9d4f4f;
+  --error-soft: #f4e7e7;
+  --shadow-card: 0 6px 20px rgba(35, 29, 24, 0.05);
+  --focus-inner: #eae6f4;
+  --focus-outer: #7567a8;
+
+  --font-ui: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* The dark palette, and it has to be declared TWICE.
+   -----------------------------------------------------------------------
+   Theme has three states: follow the system, forced light, forced dark. The
+   media query below covers the first two -- it applies the dark palette when
+   the OS is dark, and `:not([data-theme="light"])` lets a forced light
+   override it.
+
+   It cannot cover the third. On an OS set to light the query never matches,
+   so nothing inside it runs, so `data-theme="dark"` selects a block that is
+   not there and the app stays light while Settings says Dark. That was a live
+   bug from the moment the Theme control stopped being decorative (18/08): it
+   was invisible here only because the machine it was built and photographed on
+   was itself in dark mode, which made the broken direction the untested one.
+
+   So the same tokens are repeated under a plain `:root[data-theme="dark"]`
+   below. Repetition is the price of not needing a preprocessor; drift is what
+   would make it dangerous, and `style_theme.rs` fails the build if the two
+   blocks stop declaring identical values. Edit one, edit the other. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171512;
+    --surface: #1e1b18;
+    --surface-elevated: #262220;
+    --surface-subtle: #211e1a;
+    --text: #edeae4;
+    --text-secondary: #a8a49c;
+    --text-muted: #8f8a81;
+    --border: #35302a;
+    --border-strong: #423c34;
+    --accent: #9c8fcb;
+    --accent-hover: #ac9fd9;
+    --accent-soft: #322d45;
+    --accent-subtle: #282438;
+    --tab-active-text: #ac9fd9;
+    --tab-active-border: #453d5e;
+    --success: #8fbf9d;
+    --success-soft: #223026;
+    --warning-text: #d8ac56;
+    --warning-soft: #3a3222;
+    --warning-dot: #d8ac56;
+    --chip-processing-text: #d8ac56;
+    --chip-processing-bg: #3a3222;
+    --error: #d98f8f;
+    --error-soft: #392626;
+    --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.3);
+    --focus-inner: #322d45;
+    --focus-outer: #9c8fcb;
+  }
+}
+
+/* The forced-dark half of the pair above. Same values, flat selector, so it
+   applies on a light OS too. Keep in step with the block above. */
+:root[data-theme="dark"] {
+  --bg: #171512;
+  --surface: #1e1b18;
+  --surface-elevated: #262220;
+  --surface-subtle: #211e1a;
+  --text: #edeae4;
+  --text-secondary: #a8a49c;
+  --text-muted: #8f8a81;
+  --border: #35302a;
+  --border-strong: #423c34;
+  --accent: #9c8fcb;
+  --accent-hover: #ac9fd9;
+  --accent-soft: #322d45;
+  --accent-subtle: #282438;
+  --tab-active-text: #ac9fd9;
+  --tab-active-border: #453d5e;
+  --success: #8fbf9d;
+  --success-soft: #223026;
+  --warning-text: #d8ac56;
+  --warning-soft: #3a3222;
+  --warning-dot: #d8ac56;
+  --chip-processing-text: #d8ac56;
+  --chip-processing-bg: #3a3222;
+  --error: #d98f8f;
+  --error-soft: #392626;
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.3);
+  --focus-inner: #322d45;
+  --focus-outer: #9c8fcb;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+  user-select: none;
+  overflow: hidden;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-inner), 0 0 0 3px var(--focus-outer);
+  border-radius: 8px;
+}
+
+/* Every scrollbar in the app, one look: a slim warm thumb, no track, rounded
+   like everything else. The OS default was the loudest element on screen the
+   first time the table overflowed -- the owner circled it. Tokens only, so
+   both themes get theirs. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  background-clip: padding-box;
+  border: 3px solid transparent; /* inset: 4px of visible thumb */
+  border-radius: 999px;
+  min-height: 40px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+  background-clip: padding-box;
+}
+
+/* Machine-generated text sitting inside a sentence -- a model id, a filename.
+   tokens.md splits the roles: sans for what we wrote, mono for what came out
+   of the machine. No size of its own, so it stays level with the line it is
+   part of instead of introducing a fourth step to the scale. */
+.mono { font-family: var(--font-mono); font-size: inherit; }
+
+/* `hidden` means hidden, everywhere, whatever else the element's class says.
+   The browser's own `[hidden] { display: none }` loses to any class rule that
+   sets `display`, so every screen container that had one -- `.app`, `.main`,
+   `.setup`, `.empty` -- needed its own `[hidden]` patch, and this file carried
+   four of them before this line existed. S5.9 walked into the fifth: a warning
+   row (`.setting-stack`, `display: block`) that stayed on screen while the JS
+   holding it believed it was hidden, telling people their ffmpeg came from
+   PATH while the chip beside it said `bundled`.
+
+   Caught by looking at the render. `el.hidden` read `true` the whole time, so
+   every check that asked the DOM instead of the picture agreed with the bug. */
+[hidden] { display: none !important; }
+
+.app { display: flex; height: 100%; }
+
+/* --- sidebar: 290px, per the shared shell ------------------------------- */
+
+.sidebar {
+  width: 290px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px 16px 16px;
+}
+
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 20px; }
+.brand-mark { border-radius: 8px; }
+.brand-name { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+
+/* The visual signature: on every screen, next to the brand. */
+.pill-local {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 500;
+  color: var(--success); background: var(--success-soft);
+  border-radius: 999px; padding: 3px 9px;
+}
+.pill-local .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--success); }
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-item {
+  position: relative;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: inherit; text-decoration: none;
+}
+.nav-item[aria-disabled="true"] { opacity: 0.45; }
+.nav-item.is-active { background: var(--accent-subtle); }
+.nav-item.is-active::before {
+  content: "";
+  position: absolute; left: -16px; top: 8px; bottom: 8px;
+  width: 3px; border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+
+.nav-icon {
+  width: 32px; height: 32px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+}
+.nav-item.is-active .nav-icon { background: var(--accent-soft); color: var(--accent); }
+.nav-icon svg, .private-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.nav-text { display: flex; flex-direction: column; gap: 1px; }
+.nav-label { font-weight: 500; }
+.nav-sub { font-size: 11px; color: var(--text-secondary); }
+
+.private-card {
+  margin-top: auto;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  padding: 14px 16px;
+}
+.private-icon {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  border-radius: 8px; background: var(--accent-soft); color: var(--accent);
+  margin-bottom: 10px;
+}
+.private-card h2 { font-size: 14px; font-weight: 600; }
+.private-card p { margin-top: 4px; font-size: 12px; color: var(--text-secondary); }
+
+.version { padding: 14px 8px 0; font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+
+/* --- main --------------------------------------------------------------- */
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex; flex-direction: column;
+  padding: 24px 28px 0;
+  background: var(--bg);
+}
+
+.screen-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.screen-title h1 { font-size: 24px; font-weight: 600; line-height: 1.2; }
+.screen-title p { margin-top: 4px; color: var(--text-secondary); }
+
+.toolbar { display: flex; gap: 8px; }
+
+.search {
+  display: flex; align-items: center; gap: 8px;
+  width: 300px; height: 38px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+}
+.search-icon { width: 15px; height: 15px; flex: none; fill: none; stroke: var(--text-muted); stroke-width: 1.5; stroke-linecap: round; }
+.search input {
+  flex: 1; min-width: 0;
+  border: 0; outline: none; background: none;
+  font: inherit; color: var(--text);
+}
+.search input::placeholder { color: var(--text-muted); }
+.search:focus-within { box-shadow: 0 0 0 2px var(--focus-inner), 0 0 0 3px var(--focus-outer); }
+.search-kbd { display: flex; gap: 3px; }
+
+kbd {
+  display: inline-block;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) kbd { border-color: var(--border-strong); }
+}
+:root[data-theme="dark"] kbd { border-color: var(--border-strong); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 14px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit; color: var(--text);
+}
+.btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.btn:hover:not([aria-disabled="true"]) { background: var(--surface-subtle); }
+.btn[aria-disabled="true"] { opacity: 0.45; }
+
+/* --- tabs --------------------------------------------------------------- */
+
+.tabs { display: flex; gap: 8px; margin-top: 20px; height: 44px; align-items: center; }
+
+.tab {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 34px; padding: 0 13px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit; color: var(--text-secondary);
+}
+.tab:hover { background: var(--surface-subtle); }
+.tab .status-dot { width: 6px; height: 6px; border-radius: 999px; }
+.tab .count {
+  min-width: 18px; padding: 0 5px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  font-size: 11px; color: var(--text-secondary);
+}
+.tab.is-active {
+  background: var(--accent-soft);
+  border-color: var(--tab-active-border);
+  color: var(--tab-active-text);
+  font-weight: 500;
+}
+.tab.is-active .count { background: var(--surface-elevated); }
+
+/* --- table -------------------------------------------------------------- */
+
+.table {
+  margin-top: 4px;
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  /* Below the 832px minimum the columns cannot fit; scrolling sideways is the
+     deliberate answer, with the themed scrollbar above -- never clipping,
+     never the OS default. The number is checked against the track list by
+     `table_layout.rs`, because it was wrong for a day: see below. */
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.thead, #rows { min-width: 848px; }
+
+.thead, .row {
+  display: grid;
+  /* Every fixed track is the widest thing that can land in it, measured in
+     the real window rather than guessed from the demo row:
+       Duration  51  the header, not `1:23:45` (41)
+       Frames    87  `120 key frames`
+       Status   137  the `Scanning for secrets` chip, the longest status --
+                    and 137 rather than the 121 first measured here, because
+                    the processing chips carry a spinner and the first probe
+                    measured only their text. The number was wrong in the
+                    direction that clips, and nothing caught it until the
+                    dark-mode review looked at a rendered queue and saw the
+                    chip broken across two lines. A measurement that omits
+                    part of the thing measured is a guess wearing a number.
+       Items     85  the header `Sensitive items`, not `100 found` (59)
+       Created  115  `Yesterday, 11:59 PM`
+     plus a few px each, and the two action buttons at 32 and 36.
+
+     They used to be 70/110/150/120/160 -- comfortable, and 128px wider than
+     anything needed. That slack cost the two buttons at the end of the row:
+     the table box is 932px in the default 1280 window, the grid wanted 960,
+     so `Copy prompt` and `⋯` sat off the right edge behind a scrollbar. The
+     owner reported them missing, which is exactly what they were.
+
+     And the clipping was worse than a scroll: `min-width` said 950 while the
+     tracks added up to 960, so the last 10px of `⋯` was outside the scroll
+     range and unreachable at any window size. That gap opened on 18/08 when
+     the copy column (+32px, +1 gap) was added and the min-width was not. */
+  grid-template-columns: minmax(180px, 1.6fr) 54px 90px 144px 88px 122px 32px 36px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.thead {
+  height: 44px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+.thead .sort { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; vertical-align: -1px; }
+
+#rows { overflow-y: auto; flex: 1; }
+
+.row { height: 84px; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: 0; }
+.row:hover { background: var(--surface-subtle); }
+
+.rec { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.thumb {
+  width: 82px; height: 58px; flex: none;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+  object-fit: cover;
+}
+.thumb.is-blank { display: grid; place-items: center; color: var(--text-muted); }
+.thumb.is-blank svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.rec-text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+/* The name is stem + extension in two spans: the stem ellipsizes, the
+   extension never does, so a long name reads `fix-paymen….mp4` instead of
+   losing what kind of file it is -- or, before this fix, instead of running
+   clean through the Duration column: ellipsis does nothing on inline spans,
+   and these were inline. Caught by the owner on a real window. */
+.rec-name { font-family: var(--font-mono); font-size: 12px; display: flex; min-width: 0; white-space: nowrap; }
+.rec-name .stem { overflow: hidden; text-overflow: ellipsis; }
+.rec-name .ext { flex: none; }
+.rec-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+
+.cell { font-family: var(--font-mono); font-size: 12px; }
+.cell.is-quiet { color: var(--text-secondary); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px; padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 500;
+}
+.chip .status-dot, .tab .status-dot { flex: none; }
+.chip-ready { background: var(--success-soft); color: var(--success); }
+.chip-processing { background: var(--chip-processing-bg); color: var(--chip-processing-text); }
+.chip-review { background: var(--warning-soft); color: var(--warning-text); }
+.chip-error { background: var(--error-soft); color: var(--error); }
+
+.spin {
+  width: 10px; height: 10px; flex: none;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; opacity: 0.6; }
+}
+
+.created { display: flex; flex-direction: column; gap: 2px; }
+.created .cell-sub { font-size: 11px; color: var(--text-secondary); font-family: var(--font-ui); }
+
+.dots {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border: 0; background: none; border-radius: 8px;
+  color: var(--text-secondary); font: inherit;
+}
+.dots:hover { background: var(--surface-subtle); }
+.dots svg { width: 15px; height: 15px; fill: currentColor; }
+
+/* The step after approving, in the row where it can be seen.
+   Dim until the recording is approved, because before then there is nothing a
+   model may read -- but it stays clickable and answers with the reason, since a
+   dimmed control that swallows the click teaches people the app is broken. */
+.copy-prompt {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border: 0; background: none; border-radius: 8px;
+  color: var(--accent); font: inherit;
+}
+.copy-prompt svg {
+  width: 15px; height: 15px;
+  fill: none; stroke: currentColor; stroke-width: 1.5;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.copy-prompt:hover { background: var(--accent-soft); }
+.copy-prompt[aria-disabled="true"] { color: var(--text-muted); opacity: 0.45; }
+.copy-prompt[aria-disabled="true"]:hover { background: var(--surface-subtle); }
+
+.empty { flex: 1; display: grid; place-content: center; text-align: center; gap: 8px; }
+/* Author display beats the `hidden` attribute's UA rule; without this the
+   invitation showed underneath real rows. Caught on screen, not in review. */
+.empty-invite { font-size: 14px; font-weight: 500; }
+.empty-hint { font-size: 12px; color: var(--text-secondary); }
+
+/* --- footer ------------------------------------------------------------- */
+
+.foot {
+  height: 54px; flex: none;
+  display: flex; align-items: center; justify-content: space-between;
+  color: var(--text-secondary);
+}
+.foot-left { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+#receipt { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.toggle-row { display: flex; align-items: center; gap: 10px; }
+.toggle { position: relative; display: inline-block; width: 34px; height: 20px; }
+.toggle input { position: absolute; inset: 0; opacity: 0; margin: 0; }
+/* The OFF track is `text-muted`, not `border-strong`.
+   border-strong against the card it sits on is 1.48 in light and 1.45 in dark
+   -- and in dark the knob is `surface-elevated`, which IS the card colour, so
+   the whole control came down to a 1.45 outline. A switch you cannot see is
+   not reporting a state. tokens.md asks 3.0 of anything carrying meaning;
+   text-muted reads 5.04 / 4.59 against the card, and the knob still separates
+   from the track at 5.04 / 3.43. The hairline waiver does not reach here: this
+   is the control, not a divider beside it. */
+/* `pointer-events: none` is what makes a toggle a control.
+   The knob and the checkbox both sit at inset:0 inside `.toggle`, and the knob
+   comes second, so it won the hit test and every click landed on a decoration.
+   Where a `<label>` wraps the pair -- the queue footer -- the label forwarded
+   the click and the switch worked, which is why this survived: the one toggle
+   anybody tested was the one built differently. Every toggle in Settings and in
+   Setup has been unclickable since the day it was wired, with handlers behind
+   it that no mouse could reach. Reported from real use, 18/08. */
+.toggle .knob {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  border-radius: 999px;
+  background: var(--text-muted);
+  transition: background 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.toggle .knob::after {
+  content: "";
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 999px;
+  background: var(--surface-elevated);
+  transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.toggle input:checked + .knob { background: var(--accent); }
+.toggle input:checked + .knob::after { transform: translateX(14px); }
+.toggle input:focus-visible + .knob { box-shadow: 0 0 0 2px var(--focus-inner), 0 0 0 3px var(--focus-outer); }
+
+/* --- row menu ----------------------------------------------------------- */
+
+.menu {
+  position: fixed;
+  min-width: 180px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  padding: 4px;
+  z-index: 10;
+}
+.menu-item {
+  display: block; width: 100%;
+  padding: 8px 10px;
+  border: 0; border-radius: 6px;
+  background: none; font: inherit; text-align: left;
+  color: var(--error);
+}
+.menu-item:hover { background: var(--error-soft); }
+
+/* --- review screen (S5.4) ----------------------------------------------- */
+/* Appearance follows _mockups/2 Redaction Review; values from tokens.md.
+   The screens swap via the location hash; hidden must win over .main's flex. */
+
+
+.row.is-reviewable { cursor: pointer; }
+
+.review { display: flex; flex-direction: column; padding-bottom: 0; }
+
+.review-head { display: flex; align-items: flex-start; gap: 14px; }
+.back {
+  width: 34px; height: 34px; flex: none;
+  display: grid; place-items: center;
+  margin-top: 2px;
+  border: 0; background: none; border-radius: 8px;
+  color: var(--text-secondary);
+}
+.back:hover { background: var(--surface-subtle); color: var(--text); }
+.back svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.file-card {
+  margin-top: 16px;
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.file-icon {
+  width: 34px; height: 34px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.file-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.file-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.file-name { font-family: var(--font-mono); font-size: 12px; display: flex; min-width: 0; white-space: nowrap; }
+.file-name .stem { overflow: hidden; text-overflow: ellipsis; }
+.file-name .ext { flex: none; }
+.file-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+.pill-frames {
+  flex: none;
+  font-size: 11px; font-weight: 500;
+  color: var(--tab-active-text); background: var(--accent-subtle);
+  border: 1px solid var(--tab-active-border);
+  border-radius: 999px; padding: 3px 10px;
+}
+
+/* --- filmstrip --- */
+
+.filmstrip-band { margin-top: 12px; display: flex; align-items: center; gap: 6px; }
+.strip-nav {
+  width: 28px; height: 28px; flex: none;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface-elevated); color: var(--text-secondary);
+}
+.strip-nav:hover { background: var(--surface-subtle); }
+.strip-nav svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.filmstrip {
+  flex: 1; min-width: 0;
+  display: flex; gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 6px;
+}
+.strip-thumb {
+  position: relative; flex: none;
+  border: 0; padding: 0; background: none;
+  display: flex; flex-direction: column; gap: 3px;
+  border-radius: 9px;
+}
+.strip-thumb img {
+  width: 104px; height: 62px;
+  object-fit: cover;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+}
+.strip-thumb.is-selected img {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.strip-dot {
+  position: absolute; top: -3px; right: -3px;
+  width: 8px; height: 8px; border-radius: 999px;
+  background: var(--warning-dot);
+  border: 2px solid var(--bg);
+}
+.strip-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); align-self: center; }
+
+/* --- the two panels --- */
+
+.review-body { margin-top: 12px; flex: 1; min-height: 0; display: flex; gap: 16px; }
+
+.panel {
+  display: flex; flex-direction: column; min-height: 0;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.preview-panel { flex: 1; min-width: 0; }
+.detections-panel { width: 340px; flex: none; }
+
+.panel-head {
+  height: 46px; flex: none;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+
+.chip-time {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 400;
+  color: var(--text-secondary); background: var(--surface-subtle);
+  border-radius: 999px; padding: 2px 8px;
+}
+
+.zoom { display: flex; align-items: center; gap: 4px; }
+.zoom-btn {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--surface-elevated); color: var(--text-secondary);
+}
+.zoom-btn:hover { background: var(--surface-subtle); }
+.zoom-btn svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.zoom-level {
+  min-width: 42px; text-align: center;
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
+}
+
+.preview-scroll { flex: 1; min-height: 0; overflow: auto; background: var(--surface-subtle); }
+.preview-stage { position: relative; margin: 12px auto; }
+.preview-stage img {
+  display: block; width: 100%; height: 100%;
+  border-radius: 4px;
+}
+#rv-overlays { position: absolute; inset: 0; }
+
+/* A box that will be painted: amber, solid, quietly filled. One the person
+   left visible: dashed and empty -- still on screen, because looking at it is
+   the whole point of this screen. */
+.ov {
+  position: absolute;
+  border: 1.5px solid var(--warning-dot);
+  background: color-mix(in srgb, var(--warning-dot) 20%, transparent);
+  border-radius: 2px;
+}
+.ov-off {
+  border-style: dashed;
+  border-color: var(--text-muted);
+  background: none;
+}
+/* A region the person drew themselves. Same amber as a detection -- it will
+   be painted the same way -- plus the one control it has: its undo. */
+.ov-extra .ov-x {
+  position: absolute; top: -9px; right: -9px;
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+  font: inherit; font-size: 12px; line-height: 1;
+}
+.ov-extra .ov-x:hover { color: var(--error); border-color: var(--error); }
+.ov-ghost {
+  border-style: solid;
+  background: color-mix(in srgb, var(--warning-dot) 12%, transparent);
+}
+#rv-stage { cursor: crosshair; }
+#rv-stage .ov-x { cursor: default; }
+
+.pager {
+  position: relative;
+  height: 44px; flex: none;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);
+}
+.drag-hint {
+  position: absolute; left: 14px;
+  font-family: var(--font-ui); font-size: 12px; color: var(--text-secondary);
+}
+.pager-btn {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--surface-elevated); color: var(--text-secondary);
+}
+.pager-btn:hover { background: var(--surface-subtle); }
+.pager-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* --- detections list --- */
+
+.linklike {
+  border: 0; background: none; font: inherit;
+  font-size: 12px; color: var(--accent);
+  border-radius: 6px;
+}
+.linklike:hover { color: var(--accent-hover); }
+.linklike:disabled { color: var(--text-muted); }
+
+.detections { flex: 1; min-height: 0; overflow-y: auto; }
+
+.det {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.det:last-child { border-bottom: 0; }
+.det-off .det-icon, .det-off .det-text { opacity: 0.55; }
+
+.det-tick { width: 15px; height: 15px; margin-top: 8px; flex: none; accent-color: var(--accent); }
+.det-warn-icon {
+  width: 15px; height: 15px; margin-top: 8px; flex: none;
+  display: grid; place-items: center; color: var(--warning-dot);
+}
+.det-warn-icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.det-icon {
+  width: 30px; height: 30px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: var(--accent-subtle); color: var(--accent);
+}
+.det-icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+.det-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.det-kind { font-size: 12px; font-weight: 500; }
+.det-value { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.det-warn { font-size: 11px; color: var(--warning-text); }
+
+.det-where { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.det-jump {
+  display: inline-flex; align-items: center; gap: 3px;
+  border: 0; background: none; font: inherit;
+  font-size: 11px; color: var(--text-secondary);
+  border-radius: 6px;
+}
+.det-jump:hover { color: var(--accent); }
+.det-jump svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.scan-warning { flex: none; padding: 10px 14px 0; font-size: 12px; color: var(--warning-text); }
+
+.info-box {
+  flex: none;
+  margin: 12px;
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--accent-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.info-icon { flex: none; width: 16px; height: 16px; color: var(--accent); margin-top: 1px; }
+.info-icon svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.info-box p { font-size: 12px; color: var(--text-secondary); }
+
+/* --- review footer --- */
+
+.review-foot {
+  height: 62px; flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.reassure {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--text-secondary);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.reassure svg { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* What this screen has to say for itself. Sits between the reassurance line and
+   the buttons, and takes the space when there is something to report -- empty
+   it collapses, so the footer looks exactly as it did before. `--text` rather
+   than muted: this carries both "Saved" and the reason a send failed, and the
+   second one has to be readable at a glance. */
+.receipt-line {
+  flex: 1; min-width: 0;
+  text-align: right;
+  font-size: 12px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.receipt-line:empty { flex: 0; }
+
+.review-actions { display: flex; gap: 8px; flex: none; }
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+.btn-primary:hover:not([aria-disabled="true"]):not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.6; }
+@media (prefers-color-scheme: dark) {
+  /* The dark accent is light enough that white text fails on it; ink holds. */
+  :root:not([data-theme="light"]) .btn-primary { color: #171512; }
+}
+:root[data-theme="dark"] .btn-primary { color: #171512; }
+
+/* --- first setup / paste (S4.8's hero screen) ---------------------------- */
+/* Appearance follows _mockups/1 First Setup Paste: a 390px intro panel
+   replaces the nav sidebar, the main area is one big paste invitation.
+   The screen swaps with .app via the #setup hash. */
+
+.setup { display: flex; height: 100%; }
+
+.setup-intro {
+  width: 390px; flex: none;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px 24px 0;
+  position: relative;
+  overflow: hidden;
+}
+.setup-intro .brand { padding: 0 0 28px; }
+
+.setup-headline {
+  font-size: 34px; font-weight: 650; line-height: 1.18;
+  letter-spacing: -0.01em;
+  max-width: 9em;
+}
+.setup-sub { margin-top: 12px; color: var(--text-secondary); max-width: 30em; }
+
+.setup-values { margin-top: 30px; display: flex; flex-direction: column; gap: 20px; }
+/* The four steps. Numbers rather than icons: this is a sequence, and step 4 is
+   the one the product had never told anybody about, so it has to read as
+   "there is another one after the review" rather than as a fourth feature. */
+.how {
+  margin-top: 22px;
+  display: flex; flex-direction: column; gap: 9px;
+  list-style: none;
+  font-size: 13px; color: var(--text-secondary);
+}
+.how li { display: flex; align-items: center; gap: 11px; }
+/* `tab-active-text`, not `accent`, on the soft background. Plain `accent`
+   measures 4.02 against `accent-soft` in light -- fine for the nav icons that
+   already pair them, since those are decorations beside a readable label, but
+   here the numeral IS the ordering and nothing else carries it. The token that
+   exists for exactly this job reads 5.63 light and 5.46 dark. */
+.how-n {
+  width: 22px; height: 22px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: var(--accent-soft); color: var(--tab-active-text);
+  font-size: 11px; font-weight: 600;
+}
+
+.value { display: flex; gap: 13px; }
+.value-icon {
+  width: 34px; height: 34px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.value-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.value-text h2 { font-size: 14px; font-weight: 600; }
+.value-text p { margin-top: 3px; font-size: 12px; color: var(--text-secondary); }
+
+/* The one illustration the design system allows: hairline, low contrast,
+   pinned to the panel's foot where it can decorate without competing. */
+.setup-scene {
+  margin: auto -24px 0;
+  width: calc(100% + 48px);
+  height: 150px; flex: none;
+  color: var(--border-strong);
+}
+
+.setup-main {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column;
+  padding: 28px 32px 24px;
+  background: var(--bg);
+}
+
+.paste-zone {
+  /* The zone takes every pixel the optional rows leave over — the mockup's
+     proportions, and the honest hierarchy: pasting IS the screen. */
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  font: inherit; color: inherit;
+}
+.paste-zone:hover { border-color: var(--accent); background: var(--surface-elevated); }
+.paste-zone.is-drop {
+  border-color: var(--accent);
+  border-style: solid;
+  background: var(--accent-subtle);
+}
+.paste-icon {
+  /* Symmetric auto margins with the promise below: the invitation cluster
+     centres in the free space, the promise stays pinned to the zone's foot. */
+  margin-top: auto;
+  width: 52px; height: 52px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.paste-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.paste-title { font-size: 24px; font-weight: 600; }
+.paste-keys { display: flex; align-items: center; gap: 7px; }
+.paste-keys kbd { font-size: 13px; padding: 4px 12px; border-radius: 7px; }
+.paste-keys .plus { color: var(--text-muted); }
+.paste-alt { font-size: 13px; color: var(--text-secondary); }
+.paste-promise {
+  margin-top: auto; padding-top: 26px;
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.paste-promise svg { width: 13px; height: 13px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.setup-receipt { min-height: 22px; padding: 4px 2px 0; font-size: 12px; color: var(--text); }
+
+.setup-group { margin-top: 20px; font-size: 14px; font-weight: 600; }
+
+.setup-rows {
+  margin-top: 10px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.setup-row {
+  display: flex; align-items: center; gap: 13px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.setup-row:last-child { border-bottom: 0; }
+.row-icon {
+  width: 34px; height: 34px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: var(--surface-subtle); color: var(--text-secondary);
+}
+.row-icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.row-text { flex: 1; min-width: 0; }
+.row-text h3 { font-size: 13px; font-weight: 500; }
+.row-text p { margin-top: 2px; font-size: 12px; color: var(--text-secondary); }
+/* Controls that arrive with the Settings screen: present, visibly asleep. */
+.setup-row [aria-disabled="true"] { opacity: 0.45; }
+
+/* The connect step. Its explanation is two lines and carries a command, so
+   the row is taller and its button sits with the top line rather than
+   floating in the middle of a paragraph. */
+.setup-row-tall { align-items: flex-start; }
+.setup-row-tall .btn { margin-top: 2px; }
+.setup-row-tall .row-text p { white-space: normal; }
+
+/* What the person is meant to type. Selectable -- the app disables text
+   selection everywhere else, and a command you cannot select is a command you
+   can only retype by hand. The Copy button is the shortcut, not the only way. */
+.cmd {
+  display: block;
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text);
+  user-select: text; cursor: text;
+  overflow-x: auto; white-space: nowrap;
+}
+.row-value {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 13px; color: var(--accent); font-weight: 500;
+}
+.row-value svg, .row-chevron svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* The chevron is the drawing; the whole row is the button.
+   It used to be a 14x14 hit target at the end of a 944px row, so clicking the
+   row -- which is what the row looks like it wants -- landed on inert text and
+   nothing happened. Reported as "can't click it", 18/08. WCAG 2.5.8 asks 24x24
+   of a target; this was well under, and the visual invitation was 67x the size
+   of the thing that worked.
+
+   Stretched with a pseudo-element rather than by making the row itself
+   clickable: one focusable control keeps its own accessible name, keyboard
+   order stays put, and the sibling rows that own a real control (the folder
+   toggle) are untouched. */
+.row-chevron {
+  color: var(--text-secondary);
+  display: grid; place-items: center;
+  width: 28px; height: 28px;
+}
+.setup-row:has(.row-chevron) { position: relative; }
+.row-chevron::after { content: ""; position: absolute; inset: 0; border-radius: 12px; }
+.setup-row:has(.row-chevron):hover { background: var(--surface-subtle); }
+.setup-row:has(.row-chevron):hover .row-chevron { color: var(--accent); }
+
+.setup-foot {
+  flex: none; padding-top: 18px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.setup-foot .linklike { font-size: 13px; }
+
+/* --- settings screen ----------------------------------------------------- */
+/* Appearance follows _mockups/4 Settings: two-column card grid, danger zone
+   full width below. No tab bar until the other tabs have content. */
+
+/* Settings' own navigation, borrowing the Queue's filter tabs rather than
+   inventing a second tab language ten pixels away from the first. They are
+   links, not buttons: each one is a real address (`#settings/shortcuts`), so
+   the browser's own keyboard handling is the right handling. */
+.settings-tabs { margin-top: 16px; flex-wrap: wrap; height: auto; row-gap: 6px; }
+.settings-tabs .tab { text-decoration: none; cursor: default; }
+
+.settings-scroll { flex: 1; min-height: 0; overflow-y: auto; margin-top: 18px; padding-bottom: 24px; }
+
+/* A pill that reports rather than decorates: it says whether something this
+   screen is describing is actually working right now. Neutral until the
+   answer arrives, so a slow check never looks like a failure. */
+.state-pill {
+  display: inline-flex; align-items: center;
+  height: 24px; padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+  font-size: 11px; font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.state-pill.is-on {
+  background: var(--success-soft);
+  border-color: transparent;
+  color: var(--success);
+}
+.state-pill.is-off {
+  background: var(--error-soft);
+  border-color: transparent;
+  color: var(--error);
+}
+
+/* The keys of one shortcut, kept together and away from the description. */
+.chord { display: inline-flex; gap: 3px; flex: none; }
+
+.settings-grid {
+  display: grid;
+  /* minmax(0, …): a bare 1fr cannot shrink below content min-width, and at
+     the 1280 default window the right column ran off the edge behind a
+     horizontal scrollbar. Caught on the real window, not in the 1536 shots. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.settings-card { padding: 6px 0 4px; }
+.settings-card-title {
+  font-size: 14px; font-weight: 600;
+  padding: 12px 18px 8px;
+}
+.danger-title { color: var(--error); }
+
+.setting {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 18px;
+  border-top: 1px solid var(--border);
+}
+/* Narrow windows: the row WRAPS rather than crushing anything.
+   -----------------------------------------------------------------------
+   The app's configured minimum window is 960px, which leaves each column of
+   the settings grid about 298px, and a row like `Model download location`
+   wants a 220px path chip plus a Change button. Two earlier arrangements both
+   broke, in opposite directions:
+
+     `flex: none` on every control -> the text column collapsed to 16px and
+     eleven explanations were cut, measured across the six tabs.
+
+     a min-width floor on the text -> the squeeze moved to the controls, and
+     one toggle rendered 0px wide. A crushed control is worse than a clipped
+     sentence: you can still read half a sentence.
+
+   So nothing is crushed. Controls keep their size, the path chip keeps a
+   floor and ellipsizes below it, and when the row cannot fit them side by
+   side the controls drop to a second line. */
+.setting { flex-wrap: wrap; }
+.setting .select, .setting .btn, .setting .toggle, .setting .path-chip { flex: none; }
+/* 240px is the wrap trigger, not a minimum: below it the controls take the
+   next line and the text gets the row to itself. */
+.setting-text { flex: 1 1 240px; min-width: 0; }
+.setting-text h3 { font-size: 13px; font-weight: 500; }
+/* Wraps. It used to clip to one line with an ellipsis, which is fine while
+   the tail is decoration and wrong the moment it carries meaning -- measured
+   at 960px (the configured minimum window) eleven explanations were cut,
+   including `Automatically remove recordings after you a…`, where the tail is
+   the whole condition. An uneven row height costs less than a sentence that
+   stops halfway. */
+.setting-text p { margin-top: 2px; font-size: 12px; color: var(--text-secondary); }
+
+.filter-wrap { position: relative; }
+.filter-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 20;
+  min-width: 218px;
+  padding: 10px 8px 8px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.filter-head {
+  padding: 0 8px 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.filter-opt {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.filter-opt:hover { background: var(--surface-subtle); }
+.filter-opt input { accent-color: var(--accent); margin: 0; }
+/* A filter that is doing something says so, or the list looks broken. */
+.btn.is-filtering { border-color: var(--accent); color: var(--accent-hover); }
+
+/* The one setting that is a list, not a switch (S5.8). The row becomes a
+   column, and its explanation is allowed to wrap -- `.setting-text p` clips to
+   one line everywhere else, which would eat the half of this sentence that
+   says what it actually does. */
+.setting-stack { display: block; }
+.setting-stack .setting-text p { white-space: normal; overflow: visible; }
+
+
+.pattern-add { display: flex; gap: 8px; margin-top: 10px; }
+.text-input {
+  flex: 1; min-width: 0;
+  /* 38px, like every other control on this screen. tokens.md gives Settings one
+     control height and one row height; three heights in one card is what made
+     the pattern field and its Add button sit 6px out of line. */
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font: inherit; font-size: 13px;
+}
+.text-input::placeholder { color: var(--text-muted); }
+.text-input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-inner), 0 0 0 3px var(--focus-outer); }
+
+.pattern-note { margin-top: 8px; font-size: 12px; color: var(--text-muted); }
+.pattern-note[data-bad] { color: var(--error); }
+
+.pattern-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pattern-list:empty { display: none; }
+.pattern {
+  display: inline-flex; align-items: center; gap: 7px;
+  max-width: 100%;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  font-size: 12px;
+}
+.pattern span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The drawn circle stays 17px so the chip keeps its proportions; the target
+   under it is 24, which is what WCAG 2.5.8 asks and what a finger or a hurried
+   mouse actually needs. Negative margins keep the chip the size it was, so this
+   costs nothing on screen. Same fault as the 14x14 chevron, found in the same
+   sweep. */
+.pattern button {
+  flex: none;
+  width: 17px; height: 17px;
+  display: grid; place-items: center;
+  border: 0; border-radius: 999px;
+  background: none;
+  color: var(--text-muted);
+  font: inherit; font-size: 13px; line-height: 1;
+  cursor: pointer;
+  position: relative;
+}
+.pattern button::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 24px; height: 24px;
+  transform: translate(-50%, -50%);
+}
+.pattern button:hover { color: var(--error); background: var(--error-soft); }
+.pattern button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus-inner), 0 0 0 3px var(--focus-outer); }
+
+/* Controls whose behavior arrives later: present, visibly asleep. */
+.setting [aria-disabled="true"], .setting select:disabled { opacity: 0.45; }
+
+.select {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font: inherit; font-size: 13px;
+}
+
+.path-chip {
+  display: inline-flex; align-items: center;
+  height: 38px;
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.settings-card.danger { margin-top: 16px; }
+
+/* The border is `error`, not `error-soft`. Soft against the card it sits on is
+   1.20 in light and 1.11 in dark -- a button whose edge is not there. The
+   hairline waiver in tokens.md covers separators and input outlines, not the
+   only affordance on a destructive control. `error` reads 5.73 / 6.21. */
+.btn-danger {
+  color: var(--error);
+  border-color: var(--error);
+}
+.btn-danger:hover { background: var(--error-soft); }
+.btn-danger[data-armed] {
+  background: var(--error);
+  border-color: var(--error);
+  color: #ffffff;
+}
+/* Armed, on dark: the dark `error` is a light rose, and white on it is 2.54 --
+   under AA, on the one control where a misread costs data. Ink is 7.18. Same
+   shape as the .btn-primary rule above, and it only appears after the first
+   click, which is why no screenshot caught it. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .btn-danger[data-armed] { color: #171512; }
+}
+:root[data-theme="dark"] .btn-danger[data-armed] { color: #171512; }
+
+#st-receipt { padding: 10px 2px 0; }

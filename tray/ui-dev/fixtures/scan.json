@@ -1,0 +1,168 @@
+{
+  "detections_total": 10,
+  "engine": {
+    "available": true,
+    "language": "en-US"
+  },
+  "frames": [
+    {
+      "detections": [
+        {
+          "boxes": [
+            {
+              "h": 14.0,
+              "w": 332.0,
+              "x": 363.0,
+              "y": 81.0
+            }
+          ],
+          "kind": "API key",
+          "located": true,
+          "masked": "sk-••••••W4aZ"
+        },
+        {
+          "boxes": [
+            {
+              "h": 14.0,
+              "w": 59.0,
+              "x": 363.0,
+              "y": 137.0
+            },
+            {
+              "h": 14.0,
+              "w": 263.0,
+              "x": 432.0,
+              "y": 137.0
+            }
+          ],
+          "kind": "Token",
+          "located": true,
+          "masked": "ghp••••••ZeaE"
+        },
+        {
+          "boxes": [
+            {
+              "h": 10.0,
+              "w": 210.0,
+              "x": 336.0,
+              "y": 194.0
+            }
+          ],
+          "kind": "API key",
+          "located": true,
+          "masked": "AKI••••••MPLE"
+        },
+        {
+          "boxes": [
+            {
+              "h": 14.0,
+              "w": 315.0,
+              "x": 459.0,
+              "y": 305.0
+            }
+          ],
+          "kind": "Token",
+          "located": true,
+          "masked": "eyJ••••••VCJ9"
+        },
+        {
+          "boxes": [
+            {
+              "h": 14.0,
+              "w": 218.0,
+              "x": 468.0,
+              "y": 361.0
+            }
+          ],
+          "kind": "API key",
+          "located": true,
+          "masked": "51H••••••3bC6"
+        }
+      ],
+      "file": "C:\\Users\\ADMIN\\.framekeep\\cache\\61d8ecca2227ad78\\frame-00001.webp",
+      "pts_time": 0.0,
+      "words": 47
+    },
+    {
+      "detections": [
+        {
+          "boxes": [
+            {
+              "h": 13.0,
+              "w": 292.0,
+              "x": 354.0,
+              "y": 81.0
+            }
+          ],
+          "kind": "API key",
+          "located": true,
+          "masked": "sk-••••••J4az"
+        },
+        {
+          "boxes": [
+            {
+              "h": 13.0,
+              "w": 292.0,
+              "x": 354.0,
+              "y": 133.0
+            }
+          ],
+          "kind": "Token",
+          "located": true,
+          "masked": "ghp••••••zeaE"
+        },
+        {
+          "boxes": [
+            {
+              "h": 9.0,
+              "w": 183.0,
+              "x": 332.0,
+              "y": 186.0
+            }
+          ],
+          "kind": "API key",
+          "located": true,
+          "masked": "AKI••••••MPLE"
+        },
+        {
+          "boxes": [
+            {
+              "h": 13.0,
+              "w": 220.0,
+              "x": 347.0,
+              "y": 237.0
+            },
+            {
+              "h": 7.0,
+              "w": 14.0,
+              "x": 570.0,
+              "y": 240.0
+            }
+          ],
+          "kind": "Email address",
+          "located": true,
+          "masked": "qua••••••. vn"
+        },
+        {
+          "boxes": [
+            {
+              "h": 13.0,
+              "w": 276.0,
+              "x": 439.0,
+              "y": 289.0
+            }
+          ],
+          "kind": "Token",
+          "located": true,
+          "masked": "eyJ••••••VCJ9"
+        }
+      ],
+      "file": "C:\\Users\\ADMIN\\.framekeep\\cache\\61d8ecca2227ad78\\frame-00002.webp",
+      "pts_time": 8.2,
+      "words": 43
+    }
+  ],
+  "seconds": 0.2939769,
+  "unlocated_total": 0,
+  "unreadable_frames": 0
+}
