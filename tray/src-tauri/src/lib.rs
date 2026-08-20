@@ -15,6 +15,7 @@
 //! the Tauri shell builds and tests on a machine with no display at all. The
 //! GUI lives behind the `gui` feature so CI keeps that property.
 
+pub mod adapter;
 pub mod clipboard;
 pub mod handle;
 pub mod handlers;

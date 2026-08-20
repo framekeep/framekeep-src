@@ -28,6 +28,14 @@ const STR = {
   commandCopied: (line) => `Copied ${line}. Run it in the folder you work in.`,
   // The same words the Settings screen uses for "let core decide".
   modelAuto: "Best for this machine",
+  // The receipt names the folder because that is the one fact worth checking
+  // -- a config in the wrong place fails with no error, which is the failure
+  // this whole group exists to prevent.
+  connected: (folder) => `Wrote the config in ${folder}. Now restart your AI client.`,
+  // While the Connect row is showing, the typed command reads as the
+  // alternative it now is. The markup keeps the standalone title, which is
+  // what a person sees when the one-click path is not on offer.
+  manualAlternative: "Or run this once yourself, in the folder you work in",
 };
 
 // --- routing ---------------------------------------------------------------
@@ -182,6 +190,46 @@ el("su-copy-init").addEventListener("click", async () => {
     report(STR.commandCopied(await invoke("copy_connect_command")));
   } catch (e) {
     report(String(e));
+  }
+});
+
+// The one-click path. Which row shows is a fact about this machine -- is Node
+// here, is the app carrying the adapter -- so it is asked again every time the
+// screen is entered, not once at boot: the person this row sends to nodejs.org
+// comes back to a running app, and a row still saying "install Node" after
+// they just did would be the screen calling them a liar.
+function refreshConnectPath() {
+  invoke("connect_ready")
+    .then((ready) => {
+      const canClick = ready.adapter && Boolean(ready.node);
+      el("su-connect-row").hidden = !canClick;
+      el("su-node-row").hidden = !(ready.adapter && !ready.node);
+      el("su-manual-title").textContent = canClick
+        ? STR.manualAlternative
+        : el("su-manual-title").dataset.standalone;
+    })
+    .catch(() => {});
+}
+// The markup's own title is the standalone truth; remember it before the first
+// swap so the row can fall back to it when Node disappears between visits.
+el("su-manual-title").dataset.standalone = el("su-manual-title").textContent;
+refreshConnectPath();
+window.addEventListener("hashchange", () => {
+  if (onSetup()) refreshConnectPath();
+});
+
+el("su-connect").addEventListener("click", async () => {
+  const btn = el("su-connect");
+  btn.disabled = true;
+  try {
+    const done = await invoke("connect_client");
+    // null means the picker was closed -- a decision not to act, not an event
+    // worth narrating.
+    if (done) report(STR.connected(done.folder));
+  } catch (e) {
+    report(String(e));
+  } finally {
+    btn.disabled = false;
   }
 });
 

@@ -1,6 +1,6 @@
 [package]
 name = "framekeep-core"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 publish = false
 description = "Video processing for Framekeep. No UI, no IPC server -- this is the only place that knows how to handle video."

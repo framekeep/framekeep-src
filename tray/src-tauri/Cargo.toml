@@ -1,6 +1,6 @@
 [package]
 name = "framekeep-tray"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 publish = false
 description = "GUI, queue and IPC server for Framekeep. Knows nothing about video -- it calls framekeep-core for that."

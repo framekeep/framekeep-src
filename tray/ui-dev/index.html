@@ -254,11 +254,24 @@
             };
             return structuredClone(fakeSettings);
           case "app_version":
-            return "0.1.0";
+            return "1.0.0";
           case "connect_command":
             return "npx framekeep-mcp init";
           case "copy_connect_command":
             return "npx framekeep-mcp init";
+          // S6.6. Healthy by default so the shots show the shipped shape; the
+          // no-Node state is a state worth looking at too, hence ?broken=node.
+          case "connect_ready":
+            return BROKEN === "node"
+              ? { node: null, adapter: true }
+              : { node: "C:\\Program Files\\nodejs\\node.exe", adapter: true };
+          case "connect_client":
+            return {
+              folder: "C:\\Users\\dev\\projects\\acme-dashboard",
+              entry: "C:\\Users\\dev\\.framekeep\\mcp\\index.js",
+              node: "C:\\Program Files\\nodejs\\node.exe",
+              report: "Wrote 3 files.",
+            };
           // Two answers the real app can only give from a real machine. The
           // harness serves the healthy shape by default; `?broken=speech`,
           // `?broken=ffmpeg`, `?broken=shortcut` and `?broken=core` serve the
@@ -285,7 +298,7 @@
             };
             const speech = BROKEN === "speech";
             return {
-              core_version: "0.1.0",
+              core_version: "1.0.0",
               arch: "x64",
               ffmpeg,
               ffmpeg_error: null,

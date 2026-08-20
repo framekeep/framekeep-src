@@ -52,6 +52,8 @@ fn main() {
             list_models,
             connect_command,
             copy_connect_command,
+            connect_client,
+            connect_ready,
             app_version,
             shortcut_status,
             diagnostics,
@@ -693,6 +695,49 @@ fn app_version(app: AppHandle) -> String {
 #[tauri::command]
 fn shortcut_status(state: tauri::State<'_, ShortcutStatus>) -> ShortcutStatus {
     (*state).clone()
+}
+
+/// Whether the one-click path can work at all, asked before it is offered.
+///
+/// The screen needs this to decide what to show, not just what to say after a
+/// failure: a button that is always there and always fails is worse than a row
+/// that says up front what is missing. Two separate answers because they have
+/// different fixes -- install Node, versus reinstall the app.
+#[derive(serde::Serialize)]
+struct ConnectReady {
+    /// A Node was found on PATH. Its path, so the screen can name it.
+    node: Option<String>,
+    /// The app is carrying the adapter. False in a dev tree with no build.
+    adapter: bool,
+}
+
+#[tauri::command]
+fn connect_ready() -> ConnectReady {
+    ConnectReady {
+        node: framekeep_tray::adapter::node().map(|p| p.display().to_string()),
+        adapter: framekeep_tray::adapter::locate().is_ok(),
+    }
+}
+
+/// Write the MCP config into a folder the person picks. S6.6.
+///
+/// The folder comes from the system picker and only from there, the same rule
+/// `watch_folder_on` follows: the webview never holds a path of its own. Here
+/// it is also what makes the command correct rather than merely tidy -- `init`
+/// resolves the nearest repository from where it starts, so a path invented
+/// anywhere else would write three config files somewhere no client reads and
+/// report success for all three.
+#[tauri::command]
+async fn connect_client(
+    app: AppHandle,
+) -> Result<Option<framekeep_tray::adapter::Connected>, String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let picked = app.dialog().file().blocking_pick_folder();
+    let Some(folder) = picked.and_then(|f| f.into_path().ok()) else {
+        return Ok(None); // Closed the picker. Not an error, and not a change.
+    };
+    framekeep_tray::adapter::connect(&folder).map(Some)
 }
 
 /// What this machine actually has, straight from core: which ffmpeg will run,
