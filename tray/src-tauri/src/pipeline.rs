@@ -108,7 +108,12 @@ pub fn process(
     match run_stages(queue, &recording, runner, patterns, speech, notify) {
         Ok(()) => {}
         Err(message) => {
-            let mut row = recording;
+            // Re-read rather than reuse the pre-stage snapshot: the map stage
+            // already saved duration and frame count, and writing the snapshot
+            // back erased them -- the clean-machine run's error rows showed
+            // "--" for a recording whose frames had extracted fine, which sent
+            // the diagnosis hunting a map failure that never happened.
+            let mut row = queue.get(handle).ok().flatten().unwrap_or(recording);
             row.status = Status::Error;
             row.error = Some(message);
             let _ = queue.put(&row);
@@ -146,7 +151,20 @@ fn run_stages(
     notify(&row.handle);
 
     // -- transcript: the slow half, minutes at the default model's ~1x -------
-    if report.video.has_audio {
+    //
+    // Gated on the machine actually being able to transcribe. The first paste
+    // on a clean install is a video with sound and no model downloaded yet,
+    // and until 21/08 that combination turned the whole recording into an
+    // error row -- over equipment the product's own Settings copy calls
+    // optional ("Frames still work. Recordings arrive without a transcript.").
+    // The clean-machine run for the Store found it on its first recording.
+    //
+    // Asked of doctor rather than recovered from transcribe's failure,
+    // because the failure is core's human-facing sentence, and matching on
+    // prose is the same trap as the checker that greps comments. A transcribe
+    // failure with a model present still errors the row -- that stays a real
+    // fault, and the test for it stays red-provable.
+    if report.video.has_audio && speech_available(runner) {
         row.status = Status::Transcribing;
         queue.put(&row).map_err(|e| e.to_string())?;
         notify(&row.handle);
@@ -216,6 +234,21 @@ fn json<T: serde::de::DeserializeOwned>(stdout: String) -> Result<T, String> {
     serde_json::from_str(&stdout).map_err(|e| {
         format!("framekeep-core answered something unreadable ({e}). Report this with the video's format.")
     })
+}
+
+/// Whether this machine can transcribe at all -- the same answer the Settings
+/// screen trusts, from `doctor --json`.
+///
+/// Anything short of a confident yes counts as no: a doctor that cannot be
+/// run, or answers something unreadable, must degrade the recording to
+/// frames-only rather than sink it. Frames are the product; speech is a bonus.
+fn speech_available(runner: &dyn Runner) -> bool {
+    runner
+        .run(&["doctor".into(), "--json".into()])
+        .ok()
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+        .map(|d| d["whisper"]["available"].as_bool() == Some(true))
+        .unwrap_or(false)
 }
 
 // ---------------------------------------------------------------------------
@@ -443,6 +476,9 @@ mod tests {
         /// entirely, which is an older core answering.
         scan: Option<String>,
         transcribe: Result<String, String>,
+        /// What `doctor --json` answers. Healthy by default, so every test
+        /// written before the speech gate keeps meaning what it meant.
+        doctor: Result<String, String>,
         asked: Mutex<Vec<String>>,
         /// Every call's full argv, paired with the label in `asked`. The
         /// labels answer "in what order"; these answer "carrying what".
@@ -462,6 +498,7 @@ mod tests {
                         .into(),
                 ),
                 transcribe: Ok("{}".into()),
+                doctor: Ok(r#"{"whisper":{"available":true}}"#.into()),
                 asked: Mutex::new(Vec::new()),
                 argv: Mutex::new(Vec::new()),
             }
@@ -507,6 +544,10 @@ mod tests {
                 "transcribe" => {
                     self.asked.lock().unwrap().push("transcribe".into());
                     self.transcribe.clone()
+                }
+                "doctor" => {
+                    self.asked.lock().unwrap().push("doctor".into());
+                    self.doctor.clone()
                 }
                 other => panic!("pipeline asked core for `{other}`"),
             }
@@ -655,8 +696,85 @@ mod tests {
         );
         assert_eq!(
             *script.asked.lock().unwrap(),
-            ["map", "transcribe", "map --scan"]
+            ["map", "doctor", "transcribe", "map --scan"]
         );
+    }
+
+    /// The first paste on a clean install: a video with sound, no model yet.
+    /// S6.4's clean-machine run found this as an error row -- the pipeline
+    /// sank the whole recording over equipment the Settings copy calls
+    /// optional. Frames-only is the honest degrade.
+    #[test]
+    fn a_missing_speech_model_costs_the_transcript_not_the_recording() {
+        let (queue, _root) = fixture("no-model");
+        ingest(&queue, "a");
+        let mut script =
+            Script::new(r#"{"duration_seconds":10.0,"width":1920,"height":1080,"has_audio":true}"#);
+        script.doctor = Ok(
+            r#"{"whisper":{"available":false,"unavailable":"No speech model installed"}}"#.into(),
+        );
+        script.transcribe = Err("transcribe must not have been asked".into());
+
+        let stages = stages_seen(&queue, "a", &script);
+        assert_eq!(
+            stages,
+            ["extracting_frames", "scanning", "ready"],
+            "no transcribing stage, and no error"
+        );
+
+        let row = queue.get("a").unwrap().unwrap();
+        assert_eq!(row.status, Status::Ready);
+        assert_eq!(row.duration_ms, Some(10_000), "frames still arrived");
+        assert!(
+            !script
+                .asked
+                .lock()
+                .unwrap()
+                .contains(&"transcribe".to_string()),
+            "a machine that cannot transcribe was asked to anyway"
+        );
+    }
+
+    /// A stage failure must not erase what earlier stages earned. The
+    /// clean-machine error rows showed "--" for duration on recordings whose
+    /// frames had extracted fine, because the error path wrote back the
+    /// pre-stage snapshot -- and the missing metadata sent the diagnosis
+    /// hunting a map failure that never happened.
+    #[test]
+    fn an_error_row_keeps_the_metadata_the_map_stage_already_earned() {
+        let (queue, _root) = fixture("keep-meta");
+        ingest(&queue, "a");
+        let mut script =
+            Script::new(r#"{"duration_seconds":10.0,"width":1920,"height":1080,"has_audio":true}"#);
+        script.transcribe = Err("whisper fell over".into());
+
+        process(&queue, "a", &script, &[], &Default::default(), &|_| {});
+
+        let row = queue.get("a").unwrap().unwrap();
+        assert_eq!(row.status, Status::Error);
+        assert_eq!(row.error.as_deref(), Some("whisper fell over"));
+        assert_eq!(
+            row.duration_ms,
+            Some(10_000),
+            "the error path threw away the map stage's answer"
+        );
+        assert_eq!(row.frame_count, Some(2));
+    }
+
+    /// And the doctor being unreachable is the same answer, not a new error:
+    /// anything short of a confident yes degrades to frames-only.
+    #[test]
+    fn an_unreachable_doctor_reads_as_no_speech_not_as_a_failure() {
+        let (queue, _root) = fixture("no-doctor");
+        ingest(&queue, "a");
+        let mut script =
+            Script::new(r#"{"duration_seconds":10.0,"width":1920,"height":1080,"has_audio":true}"#);
+        script.doctor = Err("Couldn't run framekeep-core.".into());
+        script.transcribe = Err("transcribe must not have been asked".into());
+
+        process(&queue, "a", &script, &[], &Default::default(), &|_| {});
+        let row = queue.get("a").unwrap().unwrap();
+        assert_eq!(row.status, Status::Ready);
     }
 
     #[test]

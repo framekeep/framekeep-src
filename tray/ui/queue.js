@@ -166,7 +166,15 @@ function rowHtml(row) {
     <span class="rec">${thumb(row)}
       <span class="rec-text">
         <span class="rec-name" title="${escapeHtml(row.name)}">${fileNameHtml(row.name)}</span>
-        <span class="rec-meta">${fmtResolution(row)}</span>
+        ${
+          // An error row's second line is the error, where the eyes already
+          // are. It was tooltip-only on the chip, and the first person to ever
+          // hit a real one clicked the chip, saw nothing, and gave up -- an
+          // explanation nobody finds is an explanation the app does not have.
+          row.stage === "error" && row.error
+            ? `<span class="rec-meta is-error" title="${escapeHtml(row.error)}">${escapeHtml(row.error)}</span>`
+            : `<span class="rec-meta">${fmtResolution(row)}</span>`
+        }
       </span>
     </span>
     <span class="cell">${fmtDuration(row.duration_ms)}</span>

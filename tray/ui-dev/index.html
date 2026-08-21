@@ -108,6 +108,21 @@
   const calls = [];
   window.__HARNESS__ = { calls };
 
+  /// The model catalogue, with `installed` switchable so both sides of the
+  /// download row can be rendered. One definition, because two copies of a
+  /// fixture drift and the drift shows up as a screenshot nobody can explain.
+  const modelReport = (installed) => ({
+    models_dir: "C:\\Users\\demo\\.framekeep\\models",
+    ram_gb: 31,
+    recommended: "large-v3-turbo-q5_0",
+    models: [
+      { name: "large-v3-turbo-q5_0", size_mib: 547, installed, realtime_factor: 1.2, speed_measured: true },
+      { name: "small", size_mib: 465, installed, realtime_factor: 5.0, speed_measured: true },
+      { name: "base", size_mib: 141, installed, realtime_factor: 13.8, speed_measured: true },
+      { name: "tiny.en", size_mib: 74, installed: false, realtime_factor: 20.5, speed_measured: true },
+    ],
+  });
+
   window.__TAURI__ = {
     core: {
       convertFileSrc: (p) => p,
@@ -188,18 +203,20 @@
             return null;
           // The real catalogue's shape, with the owner's actual figures, so
           // the screenshot shows the sizes and speeds a person would compare.
+          //
+          // `?broken=speech` empties the installed column, because that is the
+          // state S6.7's download row exists for and the one a healthy machine
+          // can never show. Without a lever, the row would ship having been
+          // rendered exactly never.
           case "list_models":
-            return {
-              models_dir: "C:\\Users\\demo\\.framekeep\\models",
-              ram_gb: 31,
-              recommended: "large-v3-turbo-q5_0",
-              models: [
-                { name: "large-v3-turbo-q5_0", size_mib: 547, installed: true, realtime_factor: 1.2, speed_measured: true },
-                { name: "small", size_mib: 465, installed: true, realtime_factor: 5.0, speed_measured: true },
-                { name: "base", size_mib: 141, installed: true, realtime_factor: 13.8, speed_measured: true },
-                { name: "tiny.en", size_mib: 74, installed: false, realtime_factor: 20.5, speed_measured: true },
-              ],
-            };
+            return modelReport(BROKEN !== "speech");
+          // S6.7. No bytes move in a browser tab; what the harness has to prove
+          // is the shape the screen gets back, and that the row disappears once
+          // something is installed.
+          case "download_model":
+            return modelReport(true);
+          case "model_progress":
+            return 0;
           case "set_transcription":
             fakeSettings.transcription.model = args.model === "auto" ? null : args.model;
             fakeSettings.transcription.language = args.language === "auto" ? null : args.language;
@@ -256,9 +273,9 @@
           case "app_version":
             return "1.0.0";
           case "connect_command":
-            return "npx framekeep-mcp init";
+            return "npx.cmd framekeep-mcp init";
           case "copy_connect_command":
-            return "npx framekeep-mcp init";
+            return "npx.cmd framekeep-mcp init";
           // S6.6. Healthy by default so the shots show the shipped shape; the
           // no-Node state is a state worth looking at too, hence ?broken=node.
           case "connect_ready":
@@ -307,9 +324,17 @@
                     available: false,
                     cli: null,
                     model: null,
+                    // core's own words, copied from whisper.rs::WhisperError.
+                    // The invented sentence that stood here until 21/08 told
+                    // people to run a terminal command core has never printed,
+                    // and these renders are the Store's screenshots -- a made-up
+                    // fixture is a made-up product claim once it ships as an
+                    // image. Caught by rendering the row beside it.
                     unavailable:
-                      "No speech model is installed.\nRun `framekeep-core models get large-v3-turbo-q5_0 --yes` " +
-                      "or choose one in Settings. This machine has 16 GB RAM -> large-v3-turbo-q5_0 (574 MiB).",
+                      "No speech model installed, so there's nothing to transcribe with.\n" +
+                      "Looked in: C:\\Users\\demo\\.framekeep\\models\n" +
+                      "For this machine: large-v3-turbo-q5_0 (547 MiB).\n" +
+                      "Download it, or pass --model with a path to one you already have.",
                   }
                 : {
                     available: true,

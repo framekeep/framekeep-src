@@ -436,7 +436,23 @@ kbd {
 .rec-name { font-family: var(--font-mono); font-size: 12px; display: flex; min-width: 0; white-space: nowrap; }
 .rec-name .stem { overflow: hidden; text-overflow: ellipsis; }
 .rec-name .ext { flex: none; }
+/* core writes its diagnostics as several lines on purpose -- a path, then the
+   recommendation, then what to do. Flattened into one run they read as a
+   sentence that swallowed a filename: "...\.framekeep\models For this
+   machine:". Honour the breaks it wrote. */
+#st-speech-reason-text { white-space: pre-line; }
+
 .rec-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+/* An error sentence is prose for a person, not machine metadata: sans, error
+   color, ellipsized to the column with the full text in the title. */
+.rec-meta.is-error {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--error);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .cell { font-family: var(--font-mono); font-size: 12px; }
 .cell.is-quiet { color: var(--text-secondary); }

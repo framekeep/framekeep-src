@@ -87,3 +87,4 @@ tray/ui-dev/shots/
 # S6.1 MSIX build output -- 161 MB of copied binaries, rebuilt by tray/msix/build.ps1
 tray/msix/layout/
 tray/msix/*.msix
+tray/msix/wack-report.*

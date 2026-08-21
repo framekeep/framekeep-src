@@ -19,10 +19,47 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { DESCRIPTION as MAP_DESC, videoMap } from './tools/video_map.js';
 import { DESCRIPTION as FRAMES_DESC, videoFrames } from './tools/video_frames.js';
 import { bothChannels } from './channels.js';
 import { runInit } from './init.js';
+
+/**
+ * The version this package actually is, read from the manifest it shipped with.
+ *
+ * It used to be a literal here, and it drifted: the server told every client it
+ * was 0.1.0 while npm was serving 0.2.0. Nothing failed, which is why it lasted
+ * -- a wrong version number is only ever noticed by the person trying to work
+ * out which build they are debugging.
+ *
+ * Two places to look, because this file ships in two shapes. From npm (and the
+ * dev tree) it runs as `dist/index.js` with package.json one level up. Inside
+ * the app it runs from the flat folder adapter.py assembles, where package.json
+ * sits BESIDE it -- and the first version of this lookup, parent-only, made the
+ * packaged adapter die on its opening import. The packaging probe caught it:
+ * every Store install would have had a Connect button writing configs that
+ * point at a server which never starts.
+ */
+function readVersion(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  for (const candidate of [join(here, 'package.json'), join(here, '..', 'package.json')]) {
+    try {
+      const version = JSON.parse(readFileSync(candidate, 'utf8')).version;
+      if (typeof version === 'string') return version;
+    } catch {
+      /* try the next shape */
+    }
+  }
+  // Never let a version string kill the server, and never invent a number
+  // that could be mistaken for a release.
+  return '0.0.0';
+}
+
+const VERSION: string = readVersion();
 
 // `init` is run by a person in a terminal; everything else is a client speaking
 // MCP over stdio. Checked before the transport is opened, because a server that
@@ -32,7 +69,7 @@ if (process.argv[2] === 'init') {
 }
 
 const server = new Server(
-  { name: 'framekeep', version: '0.1.0' },
+  { name: 'framekeep', version: VERSION },
   { capabilities: { tools: {} } },
 );
 

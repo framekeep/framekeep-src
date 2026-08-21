@@ -92,6 +92,16 @@
         <p class="lede">The Windows app is not released yet; when it is, its versions appear here too. Dates are the publish times recorded by the npm registry.</p>
 
         <div class="rel">
+          <div class="rel-meta"><span class="rel-v">0.2.1</span><span class="rel-d">21 August 2026</span></div>
+          <div class="rel-body">
+            <ul>
+              <li><strong>The setup command now runs on a stock Windows install.</strong> It reads <span class="mono">npx.cmd</span> rather than <span class="mono">npx</span>: a fresh machine runs PowerShell under its default script policy, which refuses to load <span class="mono">npx.ps1</span> and answers <span class="mono">running scripts is disabled on this system</span> &mdash; a message about a setting that reads like a broken computer. Found by installing on a clean Windows account.</li>
+              <li><strong>The server reports its real version.</strong> It had been announcing <span class="mono">0.2.0</span> as <span class="mono">0.1.0</span>, because the number was typed in one place and published from another.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rel">
           <div class="rel-meta"><span class="rel-v">0.2.0</span><span class="rel-d">20 August 2026</span></div>
           <div class="rel-body">
             <ul>

@@ -391,6 +391,20 @@
                 <p id="st-speech-reason-text"></p>
               </div>
             </div>
+            <!-- The fix, on the card that reports the problem. Hidden unless a
+                 download would actually help: no model installed. Until 21/08
+                 the only way to get one was a terminal, so a Store install
+                 could never transcribe and this card explained a dead end.
+                 It stays a button rather than anything automatic -- the Privacy
+                 screen two tabs over promises one download, only when you ask,
+                 and a click is what makes that sentence true. -->
+            <div class="setting" id="st-speech-get" hidden>
+              <div class="setting-text">
+                <h3>Speech model</h3>
+                <p id="st-speech-get-sub">Downloaded from Hugging Face when you ask, and kept on this machine.</p>
+              </div>
+              <button class="btn" id="st-speech-download">Download</button>
+            </div>
           </section>
           </div>
         </div><!-- /pane-transcription -->

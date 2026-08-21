@@ -16,7 +16,7 @@ shows you every frame before any of it moves.
 
 Install the app first. The adapter on its own has nothing to run.
 
-You also need **Node.js 20 or newer**. The command below is `npx`, and your AI
+You also need **Node.js 20 or newer**. The command below runs through `npx.cmd`, and your AI
 client will start this server with `node` — without it the first step fails
 with `'npx' is not recognized`, a message that says nothing about what is
 actually missing.
@@ -24,8 +24,15 @@ actually missing.
 ## Setup
 
 ```
-npx framekeep-mcp init
+npx.cmd framekeep-mcp init
 ```
+
+**Why `npx.cmd` and not `npx`:** a fresh Windows install runs PowerShell under
+its default script policy, which refuses to load `npx.ps1` — you get `running
+scripts is disabled on this system`, which sounds like a broken machine and is
+really just a setting. Naming the `.cmd` shim skips it, and behaves the same in
+PowerShell, Windows Terminal and the old command prompt. On macOS or Linux,
+drop the `.cmd`.
 
 Run it **in the folder you work in**. `init` walks up to the nearest git
 repository and writes there, falling back to the current folder when there is
@@ -46,7 +53,7 @@ Framekeep by deleting them. Existing entries are merged, never overwritten.
 skipped above and needs its own line:
 
 ```
-npx framekeep-mcp init --global --client codex --yes
+npx.cmd framekeep-mcp init --global --client codex --yes
 ```
 
 Anything outside the project is previewed first and waits for `--yes` — a

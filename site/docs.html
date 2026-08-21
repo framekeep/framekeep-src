@@ -91,10 +91,11 @@
 
         <h2>What you need</h2>
         <p>The adapter is a shell. The work happens in the Framekeep app, which decodes video, extracts frames, transcribes speech, and &mdash; the part that matters &mdash; shows you every frame before any of it moves.</p>
-        <p>You also need <strong>Node.js 20 or newer</strong>. The command below is <span class="mono">npx</span>, and your AI client will start this server with <span class="mono">node</span> &mdash; without it the first step fails with <span class="mono">&#39;npx&#39; is not recognized</span>, a message that says nothing about what is actually missing.</p>
+        <p>You also need <strong>Node.js 20 or newer</strong>. The command below runs through <span class="mono">npx.cmd</span>, and your AI client will start this server with <span class="mono">node</span> &mdash; without it the first step fails with <span class="mono">&#39;npx&#39; is not recognized</span>, a message that says nothing about what is actually missing.</p>
 
         <h2>Setup</h2>
-        <code class="pre">npx framekeep-mcp init</code>
+        <code class="pre">npx.cmd framekeep-mcp init</code>
+        <p><strong>Why <span class="mono">npx.cmd</span> and not <span class="mono">npx</span>:</strong> a fresh Windows install runs PowerShell under its default script policy, which refuses to load <span class="mono">npx.ps1</span> &mdash; you get <span class="mono">running scripts is disabled on this system</span>, which sounds like your machine is broken and is really just a setting. Naming the <span class="mono">.cmd</span> shim skips that entirely, and it works the same in PowerShell, Windows Terminal, and the old command prompt. On macOS or Linux, drop the <span class="mono">.cmd</span>.</p>
         <p>Run it <strong>in the folder you work in</strong>. <span class="mono">init</span> walks up to the nearest git repository and writes there, falling back to the current folder when there is no repository above it &mdash; either way it says which folder it chose and why. Run it somewhere else and the config lands where nothing reads it, with no error, because nothing went wrong. <span class="mono">--dir</span> overrides the choice.</p>
         <ul>
           <li><strong>Claude Code</strong> &mdash; writes <span class="mono">.mcp.json</span></li>
@@ -105,7 +106,7 @@
 
         <h3>Codex</h3>
         <p>Codex keeps its config in TOML and has no per-project file, so it is skipped above and needs its own line:</p>
-        <code class="pre">npx framekeep-mcp init --global --client codex --yes</code>
+        <code class="pre">npx.cmd framekeep-mcp init --global --client codex --yes</code>
         <p>Anything outside the project is previewed first and waits for <span class="mono">--yes</span> &mdash; a global config belongs to you, not to this tool.</p>
         <p>Then <strong>restart your client.</strong> It will ask you to approve the Framekeep server the first time, the same as any other MCP server.</p>
 

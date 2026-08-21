@@ -38,6 +38,15 @@ const STR = {
   startupSub: "Launch in background when your computer starts.",
   modelAuto: "Best for this machine",
   modelSub: "Choose how speech in your videos is transcribed.",
+  // The size is said before the click, not after it -- half a gigabyte is a
+  // decision, and a progress bar that starts first has made it for them.
+  speechGetSub: (name, mib) =>
+    `${name} — ${mib} MiB, downloaded from Hugging Face when you ask and kept on this machine.`,
+  speechGetting: (percent) => `Downloading… ${percent}%`,
+  // Says what changes and, just as importantly, what does not: recordings
+  // already through the queue are not revisited, and a person who expects
+  // yesterday's transcripts to appear would be waiting for nothing.
+  speechGot: "Speech model installed. Recordings from now on will include a transcript.",
   // Said out loud because it is the number people are actually choosing
   // between: the default is slower than realtime, and `base` is fourteen
   // times faster. A dropdown of names hides that; a dropdown of names with
@@ -397,7 +406,73 @@ async function loadModels() {
   } else {
     sub.textContent = STR.modelSub;
   }
+
+  offerDownload(report);
 }
+
+/// The download row, shown only when downloading would change anything.
+///
+/// Asked of the model list rather than of the doctor's sentence: doctor says
+/// speech is unavailable for two different reasons -- no model, or no
+/// whisper-cli -- and only one of them is fixed by fetching a file. Reading
+/// which from its prose is the trap this codebase keeps naming; counting
+/// installed models is not.
+let pendingModel = null;
+
+function offerDownload(report) {
+  const row = el("st-speech-get");
+  if (report.models.some((m) => m.installed)) {
+    row.hidden = true;
+    pendingModel = null;
+    return;
+  }
+  // What core would pick for this machine, or the best-first head of the list
+  // when it could not read the RAM.
+  const want =
+    report.models.find((m) => m.name === report.recommended) ?? report.models[0];
+  if (!want) return;
+
+  pendingModel = want;
+  el("st-speech-get-sub").textContent = STR.speechGetSub(want.name, want.size_mib);
+  row.hidden = false;
+}
+
+el("st-speech-download").addEventListener("click", async () => {
+  if (!pendingModel) return;
+  const button = el("st-speech-download");
+  const total = pendingModel.size_mib * 1_048_576;
+  button.disabled = true;
+
+  // Progress is read off the part-file on disk, so the number cannot run ahead
+  // of the bytes. It is a poll rather than a stream because there is nothing
+  // to stream: core writes the file, and the file is the truth.
+  const tick = setInterval(async () => {
+    try {
+      const done = await invoke("model_progress");
+      if (done > 0) {
+        button.textContent = STR.speechGetting(Math.min(99, Math.floor((done / total) * 100)));
+      }
+    } catch {
+      /* a failed poll is not worth saying anything about */
+    }
+  }, 1000);
+
+  try {
+    const models = await invoke("download_model", { name: pendingModel.name });
+    say(STR.speechGot);
+    offerDownload(models);
+    // The card above still says Unavailable until something asks again.
+    await loadDiagnostics();
+  } catch (e) {
+    // core's own sentence: it names the checksum, the short read, or the
+    // network, and it already tells the person what to do next.
+    say(String(e));
+  } finally {
+    clearInterval(tick);
+    button.disabled = false;
+    button.textContent = "Download";
+  }
+});
 
 async function saveTranscription() {
   try {

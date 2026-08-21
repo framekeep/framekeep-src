@@ -50,6 +50,8 @@ fn main() {
             set_minimize_to_tray,
             set_start_on_login,
             list_models,
+            download_model,
+            model_progress,
             connect_command,
             copy_connect_command,
             connect_client,
@@ -695,6 +697,85 @@ fn app_version(app: AppHandle) -> String {
 #[tauri::command]
 fn shortcut_status(state: tauri::State<'_, ShortcutStatus>) -> ShortcutStatus {
     (*state).clone()
+}
+
+/// Fetch a speech model, because until now nothing in the app could.
+///
+/// Settings was ruled a reporting surface in S5.9 -- no knobs -- and that
+/// ruling still stands: the three it turned down were behaviour that already
+/// ran, or constants somebody measured. This is neither. It is the one action
+/// the product needs and had no door for, and the clean-machine run of 21/08
+/// is what made that concrete: a Store install could never transcribe anything
+/// without opening a terminal, while the listing promised Whisper and copy.md
+/// told people to "download it in Settings" -- a sentence pointing at nothing.
+///
+/// A person clicks it, so the promise on the Privacy screen survives word for
+/// word: one download, and only when you ask. Nothing here downloads on its
+/// own, and the paste path still degrades to frames-only rather than nagging.
+///
+/// Long-running by nature -- half a gigabyte -- so it is async and the window
+/// polls `model_progress` while it waits. The error, when there is one, is
+/// core's own sentence: it names the checksum, the short read, or the network.
+#[tauri::command]
+async fn download_model(name: String) -> Result<serde_json::Value, String> {
+    use framekeep_tray::pipeline::{CoreBinary, Runner};
+
+    // Blocking work off the UI thread. `--yes` is what turns core's preview
+    // into a fetch, and it is passed here rather than made a default there:
+    // the confirmation belongs to whoever is asking, and on the command line
+    // that is still a person typing it.
+    let models = tauri::async_runtime::spawn_blocking(move || {
+        let core = CoreBinary::locate()?;
+        core.run(&["models".into(), "get".into(), name, "--yes".into()])?;
+        core.run(&["models".into(), "--json".into()])
+    })
+    .await
+    .map_err(|e| format!("The download task ended unexpectedly: {e}"))??;
+
+    serde_json::from_str(&models).map_err(|e| format!("core answered something unreadable ({e})."))
+}
+
+/// How far that download has got, measured off the disk rather than reported.
+///
+/// core writes to a `.partial` neighbour and renames only once the checksum
+/// matches, so the size of that file is the download's own ground truth. No
+/// progress protocol to keep in sync between two binaries, and no number that
+/// can claim progress the bytes do not have -- which is the failure mode this
+/// project has hit often enough to prefer measuring.
+///
+/// Returns 0 when nothing is in flight, which is also what a finished download
+/// looks like the instant before the await returns. The window treats both the
+/// same, so neither needs a state machine.
+#[tauri::command]
+fn model_progress() -> u64 {
+    let Some(dir) = framekeep_tray::settings::load()
+        .0
+        .transcription
+        .models_dir
+        .or_else(|| {
+            std::env::var_os("USERPROFILE")
+                .or_else(|| std::env::var_os("HOME"))
+                .map(|home| {
+                    std::path::PathBuf::from(home)
+                        .join(".framekeep")
+                        .join("models")
+                })
+        })
+    else {
+        return 0;
+    };
+    // Any `.partial` in there: only one download runs at a time, and looking
+    // for the largest avoids having to rebuild core's filename rule here --
+    // a second copy of that rule is a second thing to get wrong.
+    std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter(|e| e.path().extension().is_some_and(|x| x == "partial"))
+        .filter_map(|e| e.metadata().ok())
+        .map(|m| m.len())
+        .max()
+        .unwrap_or(0)
 }
 
 /// Whether the one-click path can work at all, asked before it is offered.

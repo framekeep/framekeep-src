@@ -22,7 +22,7 @@ pub const TRAY_QUIT: &str = "Quit Framekeep";
 /// `docs/experiments/npx-spawn-windows.md` measured what happens without one.
 /// What `init` then writes never contains `npx`: it points at an absolute
 /// path, which is what keeps the daily path clear of the whole problem.
-pub const CONNECT_COMMAND: &str = "npx framekeep-mcp init";
+pub const CONNECT_COMMAND: &str = "npx.cmd framekeep-mcp init";
 
 /// The line put on the clipboard for the person to paste into their AI client.
 ///
